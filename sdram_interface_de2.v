@@ -1,0 +1,489 @@
+`timescale 1ns / 1ps
+// =============================================================
+// sdram_interface_de2.v
+// QVGA 320x240 TRIPLE-BUFFER VERSION - STABLE FRAME PIPELINE
+// Xu ly luong xu ly anh Image Processing
+// (Motion Detector + Color Detector)
+// =============================================================
+module sdram_interface_de2(
+    input  wire        clk,
+    input  wire        rst_n,
+    // VGA timing/frame sync
+    input  wire        clk_vga,
+    input  wire        vga_frame_start,
+    input  wire        rd_en,
+    // Camera frame sync
+    input  wire        cam_frame_start,
+    // Camera FIFO read side
+    input  wire [9:0]  data_count_r,
+    input  wire [15:0] f2s_data,
+    output wire        f2s_data_valid,
+    // VGA FIFO output
+    output wire        empty_fifo,
+    output wire [15:0] dout,
+    // =========================================================
+    // Motion Detector: Toa do Bounding Box cho khoi VGA hien thi
+    // =========================================================
+    output wire [9:0]  box_x_min,
+    output wire [9:0]  box_x_max,
+    output wire [9:0]  box_y_min,
+    output wire [9:0]  box_y_max,
+    // =========================================================
+    // Color Detector: 4 bounding box (do/xanh la/vang/xanh duong)
+    // =========================================================
+    output wire [9:0]  box_r_xmin,
+    output wire [9:0]  box_r_xmax,
+    output wire [9:0]  box_r_ymin,
+    output wire [9:0]  box_r_ymax,
+
+    output wire [9:0]  box_g_xmin,
+    output wire [9:0]  box_g_xmax,
+    output wire [9:0]  box_g_ymin,
+    output wire [9:0]  box_g_ymax,
+
+    output wire [9:0]  box_y_xmin,
+    output wire [9:0]  box_y_xmax,
+    output wire [9:0]  box_y_ymin,
+    output wire [9:0]  box_y_ymax,
+
+    output wire [9:0]  box_b_xmin,
+    output wire [9:0]  box_b_xmax,
+    output wire [9:0]  box_b_ymin,
+    output wire [9:0]  box_b_ymax,
+    // SDRAM pins
+    output wire        sdram_clk,
+    output wire        sdram_cke,
+    output wire        sdram_cs_n,
+    output wire        sdram_ras_n,
+    output wire        sdram_cas_n,
+    output wire        sdram_we_n,
+    output wire [11:0] sdram_addr,
+    output wire [1:0]  sdram_ba,
+    output wire [1:0]  sdram_dqm,
+    inout  wire [15:0] sdram_dq
+);
+    // =========================================================
+    // Parameters
+    // =========================================================
+    localparam idle     = 1'b0;
+    localparam burst_op = 1'b1;
+    // QVGA: 320*240 = 76800 pixels = 300 bursts
+    localparam [10:0] FRAME_BURSTS    = 11'd300;
+    localparam [10:0] FRAME_LAST      = 11'd299;
+    localparam [10:0] FRAME_MIN_VALID = 11'd298;
+    localparam [9:0]  BURST_WORDS     = 10'd256;
+    // Triple buffer page offsets
+    localparam [11:0] BUFFER0_OFFSET = 12'd0;
+    localparam [11:0] BUFFER1_OFFSET = 12'd300;
+    localparam [11:0] BUFFER2_OFFSET = 12'd600;
+    localparam [9:0] READ_LOW_WATERMARK      = 10'd768;
+    localparam [9:0] READ_CRITICAL_WATERMARK = 10'd512;
+    localparam [9:0] CAMERA_HIGH_WATERMARK   = 10'd512;
+    localparam [9:0] VGA_FIFO_CLEAR_CYCLES   = 10'd700;
+    localparam [9:0] CAM_FIFO_FLUSH_MAX      = 10'd512;
+    // =========================================================
+    // Main registers
+    // =========================================================
+    reg state_q;
+    reg state_d;
+    
+    reg [10:0] wr_page_q;
+    reg [10:0] wr_page_d;
+    reg [10:0] rd_page_q;
+    reg [10:0] rd_page_d;
+    reg [10:0] written_pages_q;
+    reg [10:0] written_pages_d;
+    
+    reg frame_complete_q;
+    reg frame_complete_d;
+    reg [1:0] wr_buf_q;
+    reg [1:0] wr_buf_d;
+    reg [1:0] rd_buf_q;
+    reg [1:0] rd_buf_d;
+    reg [1:0] pending_buf_q;
+    reg [1:0] pending_buf_d;
+    reg pending_valid_q;
+    reg pending_valid_d;
+    reg display_valid_q;
+    reg display_valid_d;
+    reg       cam_flush_q;
+    reg       cam_flush_d;
+    reg [9:0] cam_flush_cnt_q;
+    reg [9:0] cam_flush_cnt_d;
+    reg       cam_fifo_flush_rd;
+    reg        rw;
+    reg        rw_en;
+    reg [13:0] f_addr;
+    // =========================================================
+    // SDRAM controller wires
+    // =========================================================
+    wire [15:0] s2f_data;
+    wire        s2f_data_valid;
+    wire        ready;
+    wire        ctrl_f2s_data_valid;
+    // Doc tu FIFO do Data hoac do lenh Xa rac (Flush)
+    assign f2s_data_valid = ctrl_f2s_data_valid | cam_fifo_flush_rd;
+    wire [9:0] data_count_w;
+    wire       vga_fifo_full;
+    // =========================================================
+    // Synchronize VGA frame start into SDRAM clock domain
+    // =========================================================
+    reg vfs_s1, vfs_s2, vfs_s3;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            vfs_s1 <= 1'b0;
+            vfs_s2 <= 1'b0;
+            vfs_s3 <= 1'b0;
+        end else begin
+            vfs_s1 <= vga_frame_start;
+            vfs_s2 <= vfs_s1;
+            vfs_s3 <= vfs_s2;
+        end
+    end
+    wire vga_frame_pulse_clk = vfs_s2 & ~vfs_s3;
+    // =========================================================
+    // Synchronize Camera Frame Start
+    // =========================================================
+    reg cam_fs_d;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) cam_fs_d <= 1'b0;
+        else        cam_fs_d <= cam_frame_start;
+    end
+    wire cam_frame_pulse_clk = cam_frame_start & ~cam_fs_d;
+    // =========================================================
+    // Clear VGA FIFO at VGA frame start
+    // =========================================================
+    reg [9:0] fifo_clear_cnt;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            fifo_clear_cnt <= 10'd0;
+        end
+        else begin
+            if (vga_frame_pulse_clk && display_valid_q)
+                fifo_clear_cnt <= VGA_FIFO_CLEAR_CYCLES;
+            else if (fifo_clear_cnt != 10'd0)
+                fifo_clear_cnt <= fifo_clear_cnt - 10'd1;
+        end
+    end
+    wire vga_fifo_clearing = (fifo_clear_cnt != 10'd0);
+    wire vga_fifo_rst_n    = rst_n & ~vga_fifo_clearing;
+    // =========================================================
+    // Ham tro giup dia chi Buffer
+    // =========================================================
+    function [11:0] make_phys_page;
+        input [1:0]  buf_sel;
+        input [10:0] page;
+        reg   [11:0] base_page;
+        begin
+            base_page = {1'b0, page};
+            case (buf_sel)
+                2'd0: make_phys_page = base_page + BUFFER0_OFFSET;
+                2'd1: make_phys_page = base_page + BUFFER1_OFFSET;
+                2'd2: make_phys_page = base_page + BUFFER2_OFFSET;
+                default: make_phys_page = base_page + BUFFER0_OFFSET;
+            endcase
+        end
+    endfunction
+    function [13:0] page_to_faddr;
+        input [11:0] phys_page;
+        reg [11:0] row;
+        reg [1:0]  bank;
+        begin
+            bank = phys_page[1:0];
+            row  = {2'b00, phys_page[11:2]};
+            page_to_faddr = {row, bank};
+        end
+    endfunction
+    function [1:0] choose_free_buf;
+        input [1:0] rd_buf_in;
+        input [1:0] pend_buf_in;
+        input       pend_valid_in;
+        begin
+            if ((2'd0 != rd_buf_in) && ((!pend_valid_in) || (2'd0 != pend_buf_in)))
+                choose_free_buf = 2'd0;
+            else if ((2'd1 != rd_buf_in) && ((!pend_valid_in) || (2'd1 != pend_buf_in)))
+                choose_free_buf = 2'd1;
+            else
+                choose_free_buf = 2'd2;
+        end
+    endfunction
+    // =========================================================
+    // Image Processing: pixel_valid chung cho Motion + Color
+    // Lenh doc FIFO (ctrl_f2s_data_valid) di vao FIFO, mat 1 xung nhip
+    // de xuat data ra day 'f2s_data'. Ta tao tre tin hieu valid 1 xung.
+    // =========================================================
+    reg motion_pixel_valid;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            motion_pixel_valid <= 1'b0;
+        else
+            motion_pixel_valid <= ctrl_f2s_data_valid;
+    end
+
+    // =========================================================
+    // Motion Detector
+    // =========================================================
+    motion_detector u_motion_detect (
+        .clk          (clk),
+        .rst_n        (rst_n),
+        .frame_start  (cam_frame_pulse_clk),
+        .pixel_valid  (motion_pixel_valid),
+        .pixel_data   (f2s_data),
+        .box_x_min    (box_x_min),
+        .box_x_max    (box_x_max),
+        .box_y_min    (box_y_min),
+        .box_y_max    (box_y_max)
+    );
+
+    // =========================================================
+    // Color Detector (y het motion_detector, cung dung motion_pixel_valid
+    // va f2s_data)
+    // =========================================================
+    color_detector u_color_detect (
+        .clk          (clk),
+        .rst_n        (rst_n),
+        .frame_start  (cam_frame_pulse_clk),
+        .pixel_valid  (motion_pixel_valid),
+        .pixel_data   (f2s_data),
+
+        .box_r_xmin   (box_r_xmin),
+        .box_r_xmax   (box_r_xmax),
+        .box_r_ymin   (box_r_ymin),
+        .box_r_ymax   (box_r_ymax),
+
+        .box_g_xmin   (box_g_xmin),
+        .box_g_xmax   (box_g_xmax),
+        .box_g_ymin   (box_g_ymin),
+        .box_g_ymax   (box_g_ymax),
+
+        .box_y_xmin   (box_y_xmin),
+        .box_y_xmax   (box_y_xmax),
+        .box_y_ymin   (box_y_ymin),
+        .box_y_ymax   (box_y_ymax),
+
+        .box_b_xmin   (box_b_xmin),
+        .box_b_xmax   (box_b_xmax),
+        .box_b_ymin   (box_b_ymin),
+        .box_b_ymax   (box_b_ymax)
+    );
+
+    // =========================================================
+    // Register update
+    // =========================================================
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            state_q          <= idle;
+            wr_page_q        <= 11'd0;
+            rd_page_q        <= 11'd0;
+            written_pages_q  <= 11'd0;
+            frame_complete_q <= 1'b0;
+            rd_buf_q         <= 2'd0;
+            wr_buf_q         <= 2'd1;
+            pending_buf_q    <= 2'd2;
+            pending_valid_q  <= 1'b0;
+            display_valid_q  <= 1'b0;
+            cam_flush_q      <= 1'b0;
+            cam_flush_cnt_q  <= 10'd0;
+        end
+        else begin
+            state_q          <= state_d;
+            wr_page_q        <= wr_page_d;
+            rd_page_q        <= rd_page_d;
+            written_pages_q  <= written_pages_d;
+            frame_complete_q <= frame_complete_d;
+            wr_buf_q         <= wr_buf_d;
+            rd_buf_q         <= rd_buf_d;
+            pending_buf_q    <= pending_buf_d;
+            pending_valid_q  <= pending_valid_d;
+            display_valid_q  <= display_valid_d;
+            cam_flush_q      <= cam_flush_d;
+            cam_flush_cnt_q  <= cam_flush_cnt_d;
+        end
+    end
+    // =========================================================
+    // Arbitration Conditions
+    // =========================================================
+    wire cam_has_burst = (data_count_r >= BURST_WORDS);
+    wire cam_urgent    = (data_count_r >= CAMERA_HIGH_WATERMARK);
+    wire cam_can_write = cam_has_burst && !frame_complete_q;
+    wire vga_needs_data = (data_count_w < READ_LOW_WATERMARK);
+    wire vga_critical   = (data_count_w < READ_CRITICAL_WATERMARK);
+    wire vga_can_read   = display_valid_q && !vga_fifo_clearing && !vga_frame_pulse_clk;
+    always @(*) begin
+        state_d          = state_q;
+        wr_page_d        = wr_page_q;
+        rd_page_d        = rd_page_q;
+        written_pages_d  = written_pages_q;
+        frame_complete_d = frame_complete_q;
+        wr_buf_d         = wr_buf_q;
+        rd_buf_d         = rd_buf_q;
+        pending_buf_d    = pending_buf_q;
+        pending_valid_d  = pending_valid_q;
+        display_valid_d  = display_valid_q;
+        cam_flush_d      = cam_flush_q;
+        cam_flush_cnt_d  = cam_flush_cnt_q;
+        cam_fifo_flush_rd = 1'b0;
+        f_addr = 14'd0; rw = 1'b0; rw_en = 1'b0;
+        if (cam_frame_pulse_clk) begin
+            if (frame_complete_q || (written_pages_q >= FRAME_MIN_VALID)) begin
+                pending_buf_d   = wr_buf_q;
+                pending_valid_d = 1'b1;
+                wr_buf_d = choose_free_buf(rd_buf_q, wr_buf_q, 1'b1);
+            end
+            wr_page_d        = 11'd0;
+            written_pages_d  = 11'd0;
+            frame_complete_d = 1'b0;
+            cam_flush_d      = 1'b1;
+            cam_flush_cnt_d  = 10'd0;
+        end
+        else if (vga_frame_pulse_clk) begin
+            rd_page_d = 11'd0;
+            if (pending_valid_q) begin
+                rd_buf_d        = pending_buf_q;
+                pending_valid_d = 1'b0;
+                display_valid_d = 1'b1;
+            end
+        end
+        else if (cam_flush_q) begin
+            if ((state_q == burst_op) && ready) begin
+                state_d = idle;
+            end
+            else if ((state_q == idle) && ready) begin
+                if ((data_count_r != 10'd0) && (cam_flush_cnt_q < CAM_FIFO_FLUSH_MAX)) begin
+                    cam_fifo_flush_rd = 1'b1;
+                    cam_flush_cnt_d   = cam_flush_cnt_q + 10'd1;
+                end
+                else begin
+                    cam_flush_d       = 1'b0;
+                    cam_flush_cnt_d   = 10'd0;
+                end
+            end
+        end
+        else begin
+            case (state_q)
+                idle: begin
+                    if (ready) begin
+                        if (vga_can_read && vga_critical) begin
+                            rw_en = 1'b1; rw = 1'b1;
+                            f_addr = page_to_faddr(make_phys_page(rd_buf_q, rd_page_q));
+                            rd_page_d = (rd_page_q == FRAME_LAST) ? 11'd0 : (rd_page_q + 11'd1);
+                            state_d = burst_op;
+                        end
+                        else if (cam_can_write && cam_urgent) begin
+                            rw_en = 1'b1; rw = 1'b0;
+                            f_addr = page_to_faddr(make_phys_page(wr_buf_q, wr_page_q));
+                            if (wr_page_q == FRAME_LAST) begin
+                                wr_page_d = FRAME_LAST; written_pages_d = FRAME_BURSTS; frame_complete_d = 1'b1;
+                            end else begin
+                                wr_page_d = wr_page_q + 11'd1;
+                                if (written_pages_q < FRAME_BURSTS) written_pages_d = written_pages_q + 11'd1;
+                            end
+                            state_d = burst_op;
+                        end
+                        else if (vga_can_read && vga_needs_data) begin
+                            rw_en = 1'b1; rw = 1'b1;
+                            f_addr = page_to_faddr(make_phys_page(rd_buf_q, rd_page_q));
+                            rd_page_d = (rd_page_q == FRAME_LAST) ? 11'd0 : (rd_page_q + 11'd1);
+                            state_d = burst_op;
+                        end
+                        else if (cam_can_write) begin
+                            rw_en = 1'b1; rw = 1'b0;
+                            f_addr = page_to_faddr(make_phys_page(wr_buf_q, wr_page_q));
+                            if (wr_page_q == FRAME_LAST) begin
+                                wr_page_d = FRAME_LAST; written_pages_d = FRAME_BURSTS; frame_complete_d = 1'b1;
+                            end else begin
+                                wr_page_d = wr_page_q + 11'd1;
+                                if (written_pages_q < FRAME_BURSTS) written_pages_d = written_pages_q + 11'd1;
+                            end
+                            state_d = burst_op;
+                        end
+                    end
+                end
+                burst_op: begin
+                    if (ready) begin
+                        if (vga_can_read && vga_critical) begin
+                            rw_en = 1'b1; rw = 1'b1;
+                            f_addr = page_to_faddr(make_phys_page(rd_buf_q, rd_page_q));
+                            rd_page_d = (rd_page_q == FRAME_LAST) ? 11'd0 : (rd_page_q + 11'd1);
+                        end
+                        else if (cam_can_write && cam_urgent) begin
+                            rw_en = 1'b1; rw = 1'b0;
+                            f_addr = page_to_faddr(make_phys_page(wr_buf_q, wr_page_q));
+                            if (wr_page_q == FRAME_LAST) begin
+                                wr_page_d = FRAME_LAST; written_pages_d = FRAME_BURSTS; frame_complete_d = 1'b1;
+                            end else begin
+                                wr_page_d = wr_page_q + 11'd1;
+                                if (written_pages_q < FRAME_BURSTS) written_pages_d = written_pages_q + 11'd1;
+                            end
+                        end
+                        else if (vga_can_read && vga_needs_data) begin
+                            rw_en = 1'b1; rw = 1'b1;
+                            f_addr = page_to_faddr(make_phys_page(rd_buf_q, rd_page_q));
+                            rd_page_d = (rd_page_q == FRAME_LAST) ? 11'd0 : (rd_page_q + 11'd1);
+                        end
+                        else if (cam_can_write) begin
+                            rw_en = 1'b1; rw = 1'b0;
+                            f_addr = page_to_faddr(make_phys_page(wr_buf_q, wr_page_q));
+                            if (wr_page_q == FRAME_LAST) begin
+                                wr_page_d = FRAME_LAST; written_pages_d = FRAME_BURSTS; frame_complete_d = 1'b1;
+                            end else begin
+                                wr_page_d = wr_page_q + 11'd1;
+                                if (written_pages_q < FRAME_BURSTS) written_pages_d = written_pages_q + 11'd1;
+                            end
+                        end
+                        else begin
+                            state_d = idle;
+                        end
+                    end
+                end
+                default: state_d = idle;
+            endcase
+        end
+    end
+    // =========================================================
+    // SDRAM controller
+    // =========================================================
+    sdram_controller_de2_50mhz u_sdram_ctrl (
+        .clk              (clk),
+        .rst_n            (rst_n),
+        .rw               (rw),
+        .rw_en            (rw_en),
+        .f_addr           (f_addr),
+        .f2s_data         (f2s_data),
+        .s2f_data         (s2f_data),
+        .s2f_data_valid   (s2f_data_valid),
+        .f2s_data_valid   (ctrl_f2s_data_valid),
+        .ready            (ready),
+        .s_clk            (sdram_clk),
+        .s_cke            (sdram_cke),
+        .s_cs_n           (sdram_cs_n),
+        .s_ras_n          (sdram_ras_n),
+        .s_cas_n          (sdram_cas_n),
+        .s_we_n           (sdram_we_n),
+        .s_addr           (sdram_addr),
+        .s_ba             (sdram_ba),
+        .LDQM             (sdram_dqm[0]),
+        .HDQM             (sdram_dqm[1]),
+        .s_dq             (sdram_dq)
+    );
+    // =========================================================
+    // VGA FIFO
+    // =========================================================
+    wire fifo_write_sel = vga_fifo_rst_n && s2f_data_valid && !vga_fifo_full;
+    asyn_fifo #(
+        .DATA_WIDTH       (16),
+        .FIFO_DEPTH_WIDTH (10)
+    ) u_vga_fifo (
+        .rst_n        (vga_fifo_rst_n),
+        .clk_write    (clk),
+        .clk_read     (clk_vga),
+        .write        (fifo_write_sel),
+        .read         (rd_en),
+        .data_write   (s2f_data),
+        .data_read    (dout),
+        .full         (vga_fifo_full),
+        .empty        (empty_fifo),
+        .data_count_w (data_count_w),
+        .data_count_r ()
+    );
+endmodule

@@ -1,0 +1,57 @@
+
+State Machine - |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|nxt_q
+Name nxt_q.refresh nxt_q.write nxt_q.read_data nxt_q.read nxt_q.idle nxt_q.load_mode_reg nxt_q.refresh_2 nxt_q.refresh_1 nxt_q.precharge_init nxt_q.start 
+nxt_q.start 0 0 0 0 0 0 0 0 0 0 
+nxt_q.precharge_init 0 0 0 0 0 0 0 0 1 1 
+nxt_q.refresh_1 0 0 0 0 0 0 0 1 0 1 
+nxt_q.refresh_2 0 0 0 0 0 0 1 0 0 1 
+nxt_q.load_mode_reg 0 0 0 0 0 1 0 0 0 1 
+nxt_q.idle 0 0 0 0 1 0 0 0 0 1 
+nxt_q.read 0 0 0 1 0 0 0 0 0 1 
+nxt_q.read_data 0 0 1 0 0 0 0 0 0 1 
+nxt_q.write 0 1 0 0 0 0 0 0 0 1 
+nxt_q.refresh 1 0 0 0 0 0 0 0 0 1 
+
+State Machine - |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|state_q
+Name state_q.write_last state_q.delay state_q.refresh state_q.write_burst state_q.write state_q.read_data state_q.read state_q.idle state_q.load_mode_reg state_q.refresh_2 state_q.refresh_1 state_q.precharge_init state_q.start 
+state_q.start 0 0 0 0 0 0 0 0 0 0 0 0 0 
+state_q.precharge_init 0 0 0 0 0 0 0 0 0 0 0 1 1 
+state_q.refresh_1 0 0 0 0 0 0 0 0 0 0 1 0 1 
+state_q.refresh_2 0 0 0 0 0 0 0 0 0 1 0 0 1 
+state_q.load_mode_reg 0 0 0 0 0 0 0 0 1 0 0 0 1 
+state_q.idle 0 0 0 0 0 0 0 1 0 0 0 0 1 
+state_q.read 0 0 0 0 0 0 1 0 0 0 0 0 1 
+state_q.read_data 0 0 0 0 0 1 0 0 0 0 0 0 1 
+state_q.write 0 0 0 0 1 0 0 0 0 0 0 0 1 
+state_q.write_burst 0 0 0 1 0 0 0 0 0 0 0 0 1 
+state_q.refresh 0 0 1 0 0 0 0 0 0 0 0 0 1 
+state_q.delay 0 1 0 0 0 0 0 0 0 0 0 0 1 
+state_q.write_last 1 0 0 0 0 0 0 0 0 0 0 0 1 
+
+State Machine - |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|state_q
+Name state_q.S_FINISH state_q.S_NEXT state_q.S_RESET_DELAY state_q.S_WAIT_DONE state_q.S_SEND state_q.S_POWER_DELAY 
+state_q.S_POWER_DELAY 0 0 0 0 0 0 
+state_q.S_SEND 0 0 0 0 1 1 
+state_q.S_WAIT_DONE 0 0 0 1 0 1 
+state_q.S_RESET_DELAY 0 0 1 0 0 1 
+state_q.S_NEXT 0 1 0 0 0 1 
+state_q.S_FINISH 1 0 0 0 0 1 
+
+State Machine - |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|I2C_Controller:u_i2c|state
+Name state.S_DONE state.S_STOP_REL state.S_STOP_HIGH state.S_STOP_LOW state.S_ACK_FALL state.S_ACK_HIGH_B state.S_ACK_HIGH_A state.S_ACK_LOW state.S_BIT_FALL state.S_BIT_HIGH_B state.S_BIT_HIGH_A state.S_BIT_LOW state.S_START_C state.S_START_B state.S_START_A state.S_IDLE 
+state.S_IDLE 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+state.S_START_A 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 
+state.S_START_B 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 1 
+state.S_START_C 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 1 
+state.S_BIT_LOW 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 1 
+state.S_BIT_HIGH_A 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 1 
+state.S_BIT_HIGH_B 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 1 
+state.S_BIT_FALL 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 1 
+state.S_ACK_LOW 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 
+state.S_ACK_HIGH_A 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1 
+state.S_ACK_HIGH_B 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1 
+state.S_ACK_FALL 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 1 
+state.S_STOP_LOW 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 1 
+state.S_STOP_HIGH 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.S_STOP_REL 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 1 
+state.S_DONE 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 

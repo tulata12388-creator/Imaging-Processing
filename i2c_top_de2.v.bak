@@ -1,0 +1,293 @@
+/*
+`timescale 1ns / 1ps
+
+module i2c_top_de2
+    #(
+        parameter freq = 100_000,
+        parameter CLK_HZ = 50_000_000
+    )
+    (
+        input  wire       clk,
+        input  wire       rst_n,
+        input  wire       start,
+        input  wire       stop,
+        input  wire [7:0] wr_data,
+        output reg        rd_tick,
+        output reg  [1:0] ack,
+        output reg  [7:0] rd_data,
+        inout  wire       scl,
+        inout  wire       sda,
+        output wire [3:0] state
+    );
+
+    localparam integer FULL = CLK_HZ / (2 * freq);
+    localparam integer HALF = FULL / 2;
+    localparam integer CW   = 16;
+
+    localparam [3:0] idle        = 4'd0;
+    localparam [3:0] starting    = 4'd1;
+    localparam [3:0] packet      = 4'd2;
+    localparam [3:0] ack_servant = 4'd3;
+    localparam [3:0] renew_data  = 4'd4;
+    localparam [3:0] stop_1      = 4'd5;
+    localparam [3:0] stop_2      = 4'd6;
+
+    reg [3:0] state_q, state_d;
+    reg [8:0] wr_data_q, wr_data_d;
+    reg [3:0] idx_q, idx_d;
+    reg       scl_q, scl_d;
+    reg       sda_q, sda_d;
+    reg [CW-1:0] counter_q, counter_d;
+
+    assign state = state_q;
+
+    wire scl_hi = (scl_q == 1'b1) && (counter_q == HALF[CW-1:0]);
+    wire scl_lo = (scl_q == 1'b0) && (counter_q == HALF[CW-1:0]);
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            state_q   <= idle;
+            wr_data_q <= 9'd0;
+            idx_q     <= 4'd0;
+            scl_q     <= 1'b1;
+            sda_q     <= 1'b1;
+            counter_q <= {CW{1'b0}};
+        end
+        else begin
+            state_q   <= state_d;
+            wr_data_q <= wr_data_d;
+            idx_q     <= idx_d;
+            scl_q     <= scl_d;
+            sda_q     <= sda_d;
+            counter_q <= counter_d;
+        end
+    end
+
+    always @(*) begin
+        counter_d = counter_q + 1'b1;
+        scl_d = scl_q;
+        if (state_q == idle || state_q == starting || state_q == stop_1 || state_q == stop_2) begin
+            scl_d = 1'b1;
+        end
+        else if (counter_q == FULL[CW-1:0]) begin
+            counter_d = {CW{1'b0}};
+            scl_d = ~scl_q;
+        end
+    end
+
+    always @(*) begin
+        state_d   = state_q;
+        wr_data_d = wr_data_q;
+        idx_d     = idx_q;
+        sda_d     = sda_q;
+        rd_tick   = 1'b0;
+        rd_data   = 8'd0;
+        ack       = 2'b00;
+
+        case (state_q)
+            idle: begin
+                sda_d = 1'b1;
+                if (start) begin
+                    wr_data_d = {wr_data, 1'b1};
+                    idx_d = 4'd8;
+                    state_d = starting;
+                end
+            end
+
+            starting: begin
+                sda_d = 1'b1;
+                if (scl_hi) begin
+                    sda_d = 1'b0;
+                    state_d = packet;
+                end
+            end
+
+            packet: begin
+                if (scl_lo) begin
+                    sda_d = wr_data_q[idx_q];
+                    if (idx_q == 4'd0)
+                        state_d = ack_servant;
+                    else
+                        idx_d = idx_q - 1'b1;
+                end
+            end
+
+            ack_servant: begin
+                if (scl_hi) begin
+                    ack[1] = 1'b1;
+                    ack[0] = !sda;
+                    if (stop)
+                        state_d = stop_1;
+                    else
+                        state_d = renew_data;
+                end
+            end
+
+            renew_data: begin
+                wr_data_d = {wr_data, 1'b1};
+                idx_d = 4'd8;
+                state_d = packet;
+            end
+
+            stop_1: begin
+                if (scl_lo) begin
+                    sda_d = 1'b0;
+                    state_d = stop_2;
+                end
+            end
+
+            stop_2: begin
+                if (scl_hi) begin
+                    sda_d = 1'b1;
+                    state_d = idle;
+                end
+            end
+
+            default: begin
+                state_d = idle;
+                sda_d = 1'b1;
+            end
+        endcase
+    end
+
+    // Push-pull style for OV7670 SCCB. SDA is released during ACK.
+    assign scl = scl_q ? 1'b1 : 1'b0;
+    assign sda = (state_q == ack_servant) ? 1'bz : (sda_q ? 1'b1 : 1'b0);
+endmodule
+*/
+module i2c_top_de2(
+	input wire clk,
+	inout wire siod,
+	output reg sioc,
+	output reg taken,
+	input wire send,
+	input wire [7:0] id,
+	input wire [7:0] reg_xhdl1,
+	input wire [7:0] value
+);
+
+
+reg siod_xhdl0;
+reg [7:0] divider;
+reg [31:0] busy_sr, data_sr;
+
+assign siod = siod_xhdl0;
+
+initial 
+begin
+	divider<=8'b0000_0001;
+	busy_sr<={32{1'b0}};
+	data_sr<={32{1'b1}};
+end
+
+always @(busy_sr or data_sr[31])
+begin
+	if( (busy_sr[11:10] == 2'b10) | (busy_sr[20:19] == 2'b10) | (busy_sr[29:28] == 2'b10) )
+	begin
+		siod_xhdl0 <=1'bz;
+	end
+	else
+	begin
+		siod_xhdl0<=data_sr[31];
+	end
+end
+
+
+always @(posedge clk) begin
+	taken <=1'b0;
+	if(busy_sr[31] == 1'b0) begin
+		sioc<=1'b1;
+		if(send == 1'b1)
+		begin
+			if(divider == 8'b0000_0000)
+			begin
+				data_sr<={3'b100,id,1'b0,reg_xhdl1,1'b0,value,1'b0,2'b01};
+				busy_sr<={3'b111,9'b1_1111_1111,9'b1_1111_1111,9'b1_1111_1111,2'b11};
+				taken<=1'b1;
+			end
+			else
+			begin
+				divider<=divider+1;
+			end
+		end	
+	end
+	else
+	begin
+		case({busy_sr[31:29],busy_sr[2:0]})
+			{3'b111,3'b111}:
+				begin
+					case(divider[7:6])
+						2'b00: sioc<=1'b1;
+						2'b01: sioc<=1'b1;
+						2'b10: sioc<=1'b1;
+						default: sioc<=1'b1;
+					endcase
+				end
+			{3'b111,3'b110}:
+				begin
+					case(divider[7:6])
+						2'b00: sioc<=1'b1;
+						2'b01: sioc<=1'b1;
+						2'b10: sioc<=1'b1;
+						default: sioc<=1'b1;
+					endcase
+				end
+			{3'b111,3'b100}:
+				begin
+					case(divider[7:6])
+						2'b00: sioc<=1'b0;
+						2'b01: sioc<=1'b0;
+						2'b10: sioc<=1'b0;
+						default: sioc<=1'b0;
+					endcase
+				end
+			{3'b110,3'b000}:
+				begin
+					case(divider[7:6])
+						2'b00: sioc<=1'b0;
+						2'b01: sioc<=1'b1;
+						2'b10: sioc<=1'b1;
+						default: sioc<=1'b1;
+					endcase
+				end
+			{3'b100,3'b000}:
+				begin
+					case(divider[7:6])
+						2'b00: sioc<=1'b1;
+						2'b01: sioc<=1'b1;
+						2'b10: sioc<=1'b1;
+						default: sioc<=1'b1;
+					endcase
+				end
+			{3'b000,3'b000}:
+				begin
+					case(divider[7:6])
+						2'b00: sioc<=1'b1;
+						2'b01: sioc<=1'b1;
+						2'b10: sioc<=1'b1;
+						default: sioc<=1'b1;
+					endcase
+				end
+			default:
+				begin
+					case(divider[7:6])
+						2'b00: sioc<=1'b0;
+						2'b01: sioc<=1'b1;
+						2'b10: sioc<=1'b1;
+						default: sioc<=1'b0;
+					endcase
+				end
+		endcase
+		if(divider == 8'b1111_1111)
+		begin
+			busy_sr<={busy_sr[30:0],1'b0};
+			data_sr<={data_sr[30:0],1'b1};
+			divider<={8{1'b0}};
+		end
+		else
+		begin
+			divider<=divider+1;
+		end
+	end
+end
+endmodule

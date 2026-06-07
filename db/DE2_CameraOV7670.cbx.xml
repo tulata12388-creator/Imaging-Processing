@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<LOG_ROOT>
+	<PROJECT NAME="DE2_CameraOV7670">
+		<CBX_INST_ENTRY INSTANCE_NAME="|DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|asyn_fifo:u_camera_fifo|dual_port_sync:u_ram|altsyncram:ram_rtl_3" CBX_FILE_NAME="altsyncram_24d1.tdf"/>
+		<CBX_INST_ENTRY INSTANCE_NAME="|DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|asyn_fifo:u_vga_fifo|dual_port_sync:u_ram|altsyncram:ram_rtl_1" CBX_FILE_NAME="altsyncram_24d1.tdf"/>
+		<CBX_INST_ENTRY INSTANCE_NAME="|DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|altsyncram:frame_ram_rtl_2" CBX_FILE_NAME="altsyncram_0rd1.tdf"/>
+		<CBX_INST_ENTRY INSTANCE_NAME="|DE2_Camera_System_SDRAM|vga_interface_de2:u_vga|altsyncram:linebuf_rtl_0" CBX_FILE_NAME="altsyncram_gbc1.tdf"/>
+	</PROJECT>
+</LOG_ROOT>

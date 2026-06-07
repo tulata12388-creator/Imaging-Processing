@@ -1,0 +1,153 @@
+`timescale 1ns / 1ps
+// =============================================================
+// motion_detector.v
+//
+// Ð? phân gi?i quét g?c: 320x240 (QVGA)
+// Ð? phân gi?i tính toán (RAM n?i): 80x60 (H? m?u ô lu?i 4x4 th?c s?)
+// Thu?t toán: True Temporal Frame Differencing + L?c nhi?u chu?i di?m
+// =============================================================
+
+module motion_detector (
+    input  wire        clk,
+    input  wire        rst_n,
+    input  wire        frame_start,  // Xung báo b?t d?u khung hình m?i
+    input  wire        pixel_valid,  // Xung rd_en t? VGA interface ho?c FIFO
+    input  wire [15:0] pixel_data,   // D? li?u RGB565
+
+    // Port k?t n?i tr?c ti?p v?i DE2_Camera_System_SDRAM.v
+    output reg  [9:0]  box_x_min,
+    output reg  [9:0]  box_x_max,
+    output reg  [9:0]  box_y_min,
+    output reg  [9:0]  box_y_max
+);
+
+    // =========================================================
+    // HAI THÔNG S? Ð? TINH CH?NH Ð? NH?Y (B?N CÓ TH? S?A ? ÐÂY)
+    // =========================================================
+    // 1. Ngu?ng l?ch màu: 15 là m?c nh?y v?a ph?i. N?u mu?n nh?y hon n?a thì gi?m v? 12 ho?c 10.
+    localparam [5:0] THRESHOLD = 6'd15; 
+    
+    // 2. S? lu?ng macro-pixel d?ch chuy?n liên ti?p d? công nh?n (L?c nhi?u h?t don l?)
+    localparam [3:0] MIN_STREAK = 4'd2;
+
+    // 1. B? d?m t?a d? g?c ? không gian ?nh 320x240
+    reg [9:0] x_pos;
+    reg [9:0] y_pos;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            x_pos <= 10'd0;
+            y_pos <= 10'd0;
+        end else if (frame_start) begin
+            x_pos <= 10'd0;
+            y_pos <= 10'd0;
+        end else if (pixel_valid) begin
+            if (x_pos == 10'd319) begin
+                x_pos <= 10'd0;
+                if (y_pos == 10'd239)
+                    y_pos <= 10'd0;
+                else
+                    y_pos <= y_pos + 1'b1;
+            end else begin
+                x_pos <= x_pos + 1'b1;
+            end
+        end
+    end
+
+    // CH? l?y m?u t?i pixel d?u tiên c?a m?i ô lu?i 4x4 d? t?o ra ?nh 80x60 th?c s?
+    wire pixel_sample = pixel_valid && (x_pos[1:0] == 2'b00) && (y_pos[1:0] == 2'b00);
+
+    // 2. RAM n?i luu tr? khung hình tru?c dó (80 x 60 = 4800 ô nh?)
+    reg [5:0] frame_ram [0:4799];
+    wire [12:0] ram_addr = (y_pos[9:2] * 7'd80) + x_pos[9:2];
+    reg [5:0] prev_gray;
+
+    always @(posedge clk) begin
+        if (pixel_sample) begin
+            prev_gray <= frame_ram[ram_addr];
+            frame_ram[ram_addr] <= pixel_data[10:5]; // Luu kênh Green c?a khung hình hi?n t?i
+        end
+    end
+
+    // 3. Kh?i Pipeline trì hoãn 1 chu k? d? d?ng b? d? li?u d?c t? RAM
+    reg        pixel_sample_q;
+    reg [9:0]  x_pos_q;
+    reg [9:0]  y_pos_q;
+    reg [5:0]  curr_gray_q;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            pixel_sample_q <= 1'b0;
+            x_pos_q        <= 10'd0;
+            y_pos_q        <= 10'd0;
+            curr_gray_q    <= 6'd0;
+        end else begin
+            pixel_sample_q <= pixel_sample;
+            x_pos_q        <= x_pos;
+            y_pos_q        <= y_pos;
+            curr_gray_q    <= pixel_data[10:5];
+        end
+    end
+
+    // Phép tr? tr? tuy?t d?i gi?a pixel hi?n t?i và pixel cùng v? trí ? khung tru?c
+    wire [5:0] diff = (curr_gray_q > prev_gray) ? (curr_gray_q - prev_gray) : (prev_gray - curr_gray_q);
+    wire       motion_detected = (diff > THRESHOLD);
+
+    // B? d?m di?m di chuy?n liên ti?p (Streak Filter) theo chi?u ngang dòng quét
+    reg [3:0] streak_cnt;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            streak_cnt <= 4'd0;
+        end else if (frame_start || (pixel_sample_q && x_pos_q == 10'd0)) begin
+            // Reset khi b?t d?u khung hình m?i ho?c khi ch?m l? trái xu?ng dòng m?i
+            streak_cnt <= 4'd0;
+        end else if (pixel_sample_q) begin
+            if (motion_detected) begin
+                if (streak_cnt < 4'd15)
+                    streak_cnt <= streak_cnt + 1'b1;
+            end else begin
+                streak_cnt <= 4'd0; // G?p di?m tinh -> ng?t chu?i liên ti?p -> Reset b? d?m
+            end
+        end
+    end
+
+    // 4. Kh?i tìm t?a d? c?c biên (Min / Max) d? dóng khung v?t th?
+    reg [9:0] x_min_run, x_max_run;
+    reg [9:0] y_min_run, y_max_run;
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            x_min_run <= 10'd319; x_max_run <= 10'd0;
+            y_min_run <= 10'd239; y_max_run <= 10'd0;
+            box_x_min <= 10'd0;   box_x_max <= 10'd0;
+            box_y_min <= 10'd0;   box_y_max <= 10'd0;
+        end 
+        else if (frame_start) begin
+            // Cu?i khung hình: Ki?m tra xem có vùng chuy?n d?ng th?c s? h?p l? l?t qua b? l?c không
+            if (x_max_run >= x_min_run && y_max_run >= y_min_run) begin
+                // D?ch trái 1 bit (Nhân dôi) d? scale t?a d? t? h? quét 320x240 lên màn hình VGA 640x480
+                box_x_min <= x_min_run << 1; 
+                box_x_max <= x_max_run << 1;
+                box_y_min <= y_min_run << 1;
+                box_y_max <= y_max_run << 1;
+            end else begin
+                // Không d?t di?u ki?n l?c chu?i -> Không có chuy?n d?ng th?c -> ?n khung ch? nh?t
+                box_x_min <= 10'd0; box_x_max <= 10'd0;
+                box_y_min <= 10'd0; box_y_max <= 10'd0;
+            end
+            
+            // Kh?i t?o l?i giá tr? cho chu k? quét c?a khung hình ti?p theo
+            x_min_run <= 10'd319; x_max_run <= 10'd0;
+            y_min_run <= 10'd239; y_max_run <= 10'd0;
+        end 
+        // CH? C?P NH?T T?A Ð? KHI PHÁT HI?N CHUY?N Ð?NG VÀ ÐÃ TÍCH LUY Ð? CHU?I ÐI?M LIÊN TI?P
+        else if (pixel_sample_q && motion_detected && (streak_cnt >= MIN_STREAK)) begin
+            if (x_pos_q < x_min_run) x_min_run <= x_pos_q;
+            if (x_pos_q > x_max_run) x_max_run <= x_pos_q;
+            if (y_pos_q < y_min_run) y_min_run <= y_pos_q;
+            if (y_pos_q > y_max_run) y_max_run <= y_pos_q;
+        end
+    end
+
+endmodule

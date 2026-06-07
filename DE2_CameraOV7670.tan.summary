@@ -1,0 +1,106 @@
+--------------------------------------------------------------------------------------
+Timing Analyzer Summary
+--------------------------------------------------------------------------------------
+
+Type           : Worst-case tsu
+Slack          : N/A
+Required Time  : None
+Actual Time    : 17.343 ns
+From           : KEY[0]
+To             : sdram_interface_de2:u_sdram_if|asyn_fifo:u_vga_fifo|data_count_w[9]
+From Clock     : --
+To Clock       : CLOCK_50
+Failed Paths   : 0
+
+Type           : Worst-case tco
+Slack          : N/A
+Required Time  : None
+Actual Time    : 21.604 ns
+From           : vga_interface_de2:u_vga|vga_core_de2:u_vga_core|h_cnt[8]
+To             : VGA_G[9]
+From Clock     : CLOCK_50
+To Clock       : --
+Failed Paths   : 0
+
+Type           : Worst-case tpd
+Slack          : N/A
+Required Time  : None
+Actual Time    : 19.278 ns
+From           : SW[17]
+To             : HEX1[1]
+From Clock     : --
+To Clock       : --
+Failed Paths   : 0
+
+Type           : Worst-case th
+Slack          : N/A
+Required Time  : None
+Actual Time    : -2.610 ns
+From           : OV7670_D[5]
+To             : camera_interface_de2:u_camera|byte_hi[5]
+From Clock     : --
+To Clock       : OV7670_PCLK
+Failed Paths   : 0
+
+Type           : Clock Setup: 'sdram_pll_50:u_pll|altpll:altpll_component|_clk0'
+Slack          : 7.772 ns
+Required Time  : 50.00 MHz ( period = 20.000 ns )
+Actual Time    : 81.78 MHz ( period = 12.228 ns )
+From           : sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|altsyncram:frame_ram_rtl_2|altsyncram_0rd1:auto_generated|altsyncram_2eh1:altsyncram1|ram_block2a1~porta_address_reg11
+To             : sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|y_min_run[3]
+From Clock     : sdram_pll_50:u_pll|altpll:altpll_component|_clk0
+To Clock       : sdram_pll_50:u_pll|altpll:altpll_component|_clk0
+Failed Paths   : 0
+
+Type           : Clock Setup: 'sdram_pll_50:u_pll|altpll:altpll_component|_clk2'
+Slack          : 18.335 ns
+Required Time  : 25.00 MHz ( period = 40.000 ns )
+Actual Time    : N/A
+From           : sdram_interface_de2:u_sdram_if|asyn_fifo:u_vga_fifo|w_ptr_bin[0]
+To             : sdram_interface_de2:u_sdram_if|asyn_fifo:u_vga_fifo|w_gray_sync1[0]
+From Clock     : sdram_pll_50:u_pll|altpll:altpll_component|_clk0
+To Clock       : sdram_pll_50:u_pll|altpll:altpll_component|_clk2
+Failed Paths   : 0
+
+Type           : Clock Setup: 'OV7670_PCLK'
+Slack          : N/A
+Required Time  : None
+Actual Time    : 150.99 MHz ( period = 6.623 ns )
+From           : camera_interface_de2:u_camera|asyn_fifo:u_camera_fifo|full
+To             : camera_interface_de2:u_camera|asyn_fifo:u_camera_fifo|full
+From Clock     : OV7670_PCLK
+To Clock       : OV7670_PCLK
+Failed Paths   : 0
+
+Type           : Clock Hold: 'sdram_pll_50:u_pll|altpll:altpll_component|_clk0'
+Slack          : 0.391 ns
+Required Time  : 50.00 MHz ( period = 20.000 ns )
+Actual Time    : N/A
+From           : camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|I2C_Controller:u_i2c|sda_oe
+To             : camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|I2C_Controller:u_i2c|sda_oe
+From Clock     : sdram_pll_50:u_pll|altpll:altpll_component|_clk0
+To Clock       : sdram_pll_50:u_pll|altpll:altpll_component|_clk0
+Failed Paths   : 0
+
+Type           : Clock Hold: 'sdram_pll_50:u_pll|altpll:altpll_component|_clk2'
+Slack          : 0.516 ns
+Required Time  : 25.00 MHz ( period = 40.000 ns )
+Actual Time    : N/A
+From           : sdram_interface_de2:u_sdram_if|asyn_fifo:u_vga_fifo|w_gray_sync1[10]
+To             : sdram_interface_de2:u_sdram_if|asyn_fifo:u_vga_fifo|w_gray_sync2[10]
+From Clock     : sdram_pll_50:u_pll|altpll:altpll_component|_clk2
+To Clock       : sdram_pll_50:u_pll|altpll:altpll_component|_clk2
+Failed Paths   : 0
+
+Type           : Total number of failed paths
+Slack          : 
+Required Time  : 
+Actual Time    : 
+From           : 
+To             : 
+From Clock     : 
+To Clock       : 
+Failed Paths   : 0
+
+--------------------------------------------------------------------------------------
+
