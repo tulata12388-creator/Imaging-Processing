@@ -2,10 +2,9 @@
 // =============================================================
 // DE2 Cyclone II EP2C35 + OV7670 + SDRAM framebuffer
 // Top-level co them:
-//   - SW[1]: detect mau do      -> hien bbox_red
-//   - SW[2]: detect mau xanh la -> hien bbox_green
-//   - SW[3]: detect mau vang    -> hien bbox_yellow
-//   - SW[4]: detect ca 3 mau    -> hien bbox red+green+yellow
+//   - SW[1] : detect mau do -> hien bbox_red
+//   - SW[2] : Flip ngang (Horizontal Mirror, Left-Right)
+//   - SW[3] : Rotate 180 (Flip ngang + Flip doc)
 //   - SW[17]: motion detection mode (giu nguyen)
 //   - HEX display: tuy theo SW mode hien thi toa do bbox
 // =============================================================
@@ -56,28 +55,24 @@ module DE2_Camera_System_SDRAM(
 
     // =========================================================
     // Switch decode
-    // SW[0]  -> mode 0000: normal (khong overlay)
+    // SW[0]  -> mode normal (khong overlay)
     // SW[1]  -> mode detect mau do
-    // SW[2]  -> mode detect mau xanh la
-    // SW[3]  -> mode detect mau vang
-    // SW[4]  -> mode detect ca 3 mau (do + xanh la + vang)
-    // SW[17] -> motion detection mode (giu nguyen)
+    // SW[2]  -> Flip ngang (Horizontal Mirror)
+    // SW[3]  -> Rotate 180 (flip_h + flip_v)
+    // SW[17] -> motion detection mode
     // =========================================================
     wire mode_normal  = SW[0];
     wire mode_red     = SW[1];
-    wire mode_green   = SW[2];
-    wire mode_yellow  = SW[3];
-    wire mode_3color  = SW[4];  // hien ca 3 mau cung luc
+    wire flip_h       = SW[2];   // Flip ngang: dao trai-phai trong VGA layer
+    wire flip_v       = SW[3];   // Flip doc  : SDRAM doc nguoc thu tu dong
+                                 // Rotate 180 = SW[3] (flip_h va flip_v deu active)
 
     wire enable_motion_mode = SW[17];
 
-    // color_mode[3:0]: bit0=red, bit1=green, bit2=yellow, bit3=blue
-    // mode_3color: bat ca 3 bit do+green+yellow (0111)
+    // color_mode[0]: bit0=red (cac bit con lai khong dung)
     wire [3:0] color_mode;
-    assign color_mode[0] = mode_red   || mode_3color;  // Red
-    assign color_mode[1] = mode_green || mode_3color;  // Green
-    assign color_mode[2] = mode_yellow|| mode_3color;  // Yellow
-    assign color_mode[3] = 1'b0;                       // Blue: chua dung SW rieng
+    assign color_mode[0] = mode_red;
+    assign color_mode[3:1] = 3'b000;
 
     // =========================================================
     // PLL
@@ -133,12 +128,9 @@ module DE2_Camera_System_SDRAM(
     wire [9:0] box_y_max;
 
     // =========================================================
-    // Color detector: 4x bbox (16 wire)
+    // Color detector: bbox mau do
     // =========================================================
     wire [9:0] box_r_xmin, box_r_xmax, box_r_ymin, box_r_ymax;
-    wire [9:0] box_g_xmin, box_g_xmax, box_g_ymin, box_g_ymax;
-    wire [9:0] box_y_xmin, box_y_xmax, box_y_ymin, box_y_ymax;
-    wire [9:0] box_b_xmin, box_b_xmax, box_b_ymin, box_b_ymax;
 
     // =========================================================
     // Camera interface
@@ -170,6 +162,7 @@ module DE2_Camera_System_SDRAM(
     sdram_interface_de2 u_sdram_if (
         .clk             (clk_sdram),
         .rst_n           (sys_rst_n),
+        .flip_v          (flip_v),
         .clk_vga         (clk_vga),
         .vga_frame_start (vga_frame_start),
         .rd_en           (rd_en),
@@ -189,21 +182,6 @@ module DE2_Camera_System_SDRAM(
         .box_r_xmax      (box_r_xmax),
         .box_r_ymin      (box_r_ymin),
         .box_r_ymax      (box_r_ymax),
-        // Color bbox - Green
-        .box_g_xmin      (box_g_xmin),
-        .box_g_xmax      (box_g_xmax),
-        .box_g_ymin      (box_g_ymin),
-        .box_g_ymax      (box_g_ymax),
-        // Color bbox - Yellow
-        .box_y_xmin      (box_y_xmin),
-        .box_y_xmax      (box_y_xmax),
-        .box_y_ymin      (box_y_ymin),
-        .box_y_ymax      (box_y_ymax),
-        // Color bbox - Blue
-        .box_b_xmin      (box_b_xmin),
-        .box_b_xmax      (box_b_xmax),
-        .box_b_ymin      (box_b_ymin),
-        .box_b_ymax      (box_b_ymax),
         // SDRAM pins
         .sdram_clk       (sdram_clk_unused),
         .sdram_cke       (DRAM_CKE),
@@ -218,7 +196,7 @@ module DE2_Camera_System_SDRAM(
     );
 
     // =========================================================
-    // VGA interface (co overlay 4 khung mau)
+    // VGA interface (overlay khung do)
     // =========================================================
     vga_interface_de2 u_vga (
         .clk_vga         (clk_vga),
@@ -227,6 +205,9 @@ module DE2_Camera_System_SDRAM(
         .din             (vga_fifo_dout),
         .rd_en           (rd_en),
         .vga_frame_start (vga_frame_start),
+        // Image Flipping
+        .flip_h          (flip_h),
+        .flip_v          (flip_v),
         // Motion bbox
         .box_x_min       (box_x_min),
         .box_x_max       (box_x_max),
@@ -238,21 +219,6 @@ module DE2_Camera_System_SDRAM(
         .box_r_xmax      (box_r_xmax),
         .box_r_ymin      (box_r_ymin),
         .box_r_ymax      (box_r_ymax),
-        // Color bbox - Green
-        .box_g_xmin      (box_g_xmin),
-        .box_g_xmax      (box_g_xmax),
-        .box_g_ymin      (box_g_ymin),
-        .box_g_ymax      (box_g_ymax),
-        // Color bbox - Yellow
-        .box_y_xmin      (box_y_xmin),
-        .box_y_xmax      (box_y_xmax),
-        .box_y_ymin      (box_y_ymin),
-        .box_y_ymax      (box_y_ymax),
-        // Color bbox - Blue
-        .box_b_xmin      (box_b_xmin),
-        .box_b_xmax      (box_b_xmax),
-        .box_b_ymin      (box_b_ymin),
-        .box_b_ymax      (box_b_ymax),
         // Color mode mask
         .color_mode      (color_mode),
         // VGA output
@@ -269,16 +235,10 @@ module DE2_Camera_System_SDRAM(
 
     // =========================================================
     // HEX display logic:
-    // Hien thi toa do X va Y cua bbox dang active theo thu tu:
-    //   SW[1] -> bbox do   (box_r)
-    //   SW[2] -> bbox xanh la (box_g)
-    //   SW[3] -> bbox vang (box_y)
-    //   SW[4] -> bbox do   (uu tien hien box_r trong mode 3 mau)
-    //   SW[17]-> bbox motion
-    //   Else  -> hien 0
-    // HEX0-HEX2: X min cua bbox dang active
-    // HEX4-HEX6: Y min cua bbox dang active
-    // HEX3, HEX7: tat (blank)
+    //   SW[1]  -> bbox do (box_r)
+    //   SW[17] -> bbox motion
+    //   Else   -> hien 0
+    // HEX0-HEX2: X min; HEX4-HEX6: Y min; HEX3,HEX7: blank
     // =========================================================
     reg [9:0] hex_xmin;
     reg [9:0] hex_ymin;
@@ -287,15 +247,9 @@ module DE2_Camera_System_SDRAM(
         if (enable_motion_mode) begin
             hex_xmin = box_x_min;
             hex_ymin = box_y_min;
-        end else if (mode_red || mode_3color) begin
+        end else if (mode_red) begin
             hex_xmin = box_r_xmin;
             hex_ymin = box_r_ymin;
-        end else if (mode_green) begin
-            hex_xmin = box_g_xmin;
-            hex_ymin = box_g_ymin;
-        end else if (mode_yellow) begin
-            hex_xmin = box_y_xmin;
-            hex_ymin = box_y_ymin;
         end else begin
             hex_xmin = 10'd0;
             hex_ymin = 10'd0;

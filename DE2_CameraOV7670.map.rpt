@@ -1,5 +1,5 @@
 Analysis & Synthesis report for DE2_CameraOV7670
-Sun Jun 07 18:18:49 2026
+Sun Jun 07 21:25:49 2026
 Quartus II Version 9.1 Build 350 03/24/2010 Service Pack 2 SJ Web Edition
 
 
@@ -79,15 +79,15 @@ applicable agreement for further details.
 +-----------------------------------------------------------------------------------+
 ; Analysis & Synthesis Summary                                                      ;
 +------------------------------------+----------------------------------------------+
-; Analysis & Synthesis Status        ; Successful - Sun Jun 07 18:18:49 2026        ;
+; Analysis & Synthesis Status        ; Successful - Sun Jun 07 21:25:49 2026        ;
 ; Quartus II Version                 ; 9.1 Build 350 03/24/2010 SP 2 SJ Web Edition ;
 ; Revision Name                      ; DE2_CameraOV7670                             ;
 ; Top-level Entity Name              ; DE2_Camera_System_SDRAM                      ;
 ; Family                             ; Cyclone II                                   ;
-; Total logic elements               ; 2,678                                        ;
-;     Total combinational functions  ; 2,362                                        ;
-;     Dedicated logic registers      ; 1,006                                        ;
-; Total registers                    ; 1006                                         ;
+; Total logic elements               ; 11,056                                       ;
+;     Total combinational functions  ; 5,692                                        ;
+;     Dedicated logic registers      ; 5,958                                        ;
+; Total registers                    ; 5958                                         ;
 ; Total pins                         ; 166                                          ;
 ; Total virtual pins                 ; 0                                            ;
 ; Total memory bits                  ; 66,688                                       ;
@@ -222,29 +222,29 @@ Parallel compilation was disabled, but you have multiple processors available. E
 +---------------------------------------------+--------------------------------------------------+
 ; Resource                                    ; Usage                                            ;
 +---------------------------------------------+--------------------------------------------------+
-; Estimated Total logic elements              ; 2,678                                            ;
+; Estimated Total logic elements              ; 11,056                                           ;
 ;                                             ;                                                  ;
-; Total combinational functions               ; 2362                                             ;
+; Total combinational functions               ; 5692                                             ;
 ; Logic element usage by number of LUT inputs ;                                                  ;
-;     -- 4 input functions                    ; 773                                              ;
-;     -- 3 input functions                    ; 879                                              ;
-;     -- <=2 input functions                  ; 710                                              ;
+;     -- 4 input functions                    ; 4512                                             ;
+;     -- 3 input functions                    ; 598                                              ;
+;     -- <=2 input functions                  ; 582                                              ;
 ;                                             ;                                                  ;
 ; Logic elements by mode                      ;                                                  ;
-;     -- normal mode                          ; 1429                                             ;
-;     -- arithmetic mode                      ; 933                                              ;
+;     -- normal mode                          ; 4981                                             ;
+;     -- arithmetic mode                      ; 711                                              ;
 ;                                             ;                                                  ;
-; Total registers                             ; 1006                                             ;
-;     -- Dedicated logic registers            ; 1006                                             ;
+; Total registers                             ; 5958                                             ;
+;     -- Dedicated logic registers            ; 5958                                             ;
 ;     -- I/O registers                        ; 0                                                ;
 ;                                             ;                                                  ;
 ; I/O pins                                    ; 166                                              ;
 ; Total memory bits                           ; 66688                                            ;
 ; Total PLLs                                  ; 1                                                ;
 ; Maximum fan-out node                        ; sdram_pll_50:u_pll|altpll:altpll_component|_clk0 ;
-; Maximum fan-out                             ; 993                                              ;
-; Total fan-out                               ; 12317                                            ;
-; Average fan-out                             ; 3.43                                             ;
+; Maximum fan-out                             ; 5945                                             ;
+; Total fan-out                               ; 40881                                            ;
+; Average fan-out                             ; 3.44                                             ;
 +---------------------------------------------+--------------------------------------------------+
 
 
@@ -253,30 +253,30 @@ Parallel compilation was disabled, but you have multiple processors available. E
 +-------------------------------------------------+-------------------+--------------+-------------+--------------+---------+-----------+------+--------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------+
 ; Compilation Hierarchy Node                      ; LC Combinationals ; LC Registers ; Memory Bits ; DSP Elements ; DSP 9x9 ; DSP 18x18 ; Pins ; Virtual Pins ; Full Hierarchy Name                                                                                                                                                                              ; Library Name ;
 +-------------------------------------------------+-------------------+--------------+-------------+--------------+---------+-----------+------+--------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------+
-; |DE2_Camera_System_SDRAM                        ; 2362 (42)         ; 1006 (0)     ; 66688       ; 0            ; 0       ; 0         ; 166  ; 0            ; |DE2_Camera_System_SDRAM                                                                                                                                                                         ; work         ;
-;    |camera_interface_de2:u_camera|              ; 459 (50)          ; 252 (51)     ; 16384       ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera                                                                                                                                           ;              ;
+; |DE2_Camera_System_SDRAM                        ; 5692 (21)         ; 5958 (0)     ; 66688       ; 0            ; 0       ; 0         ; 166  ; 0            ; |DE2_Camera_System_SDRAM                                                                                                                                                                         ; work         ;
+;    |camera_interface_de2:u_camera|              ; 457 (50)          ; 252 (51)     ; 16384       ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera                                                                                                                                           ;              ;
 ;       |asyn_fifo:u_camera_fifo|                 ; 96 (96)           ; 78 (78)      ; 16384       ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|asyn_fifo:u_camera_fifo                                                                                                                   ;              ;
 ;          |dual_port_sync:u_ram|                 ; 0 (0)             ; 0 (0)        ; 16384       ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|asyn_fifo:u_camera_fifo|dual_port_sync:u_ram                                                                                              ;              ;
 ;             |altsyncram:ram_rtl_3|              ; 0 (0)             ; 0 (0)        ; 16384       ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|asyn_fifo:u_camera_fifo|dual_port_sync:u_ram|altsyncram:ram_rtl_3                                                                         ;              ;
 ;                |altsyncram_24d1:auto_generated| ; 0 (0)             ; 0 (0)        ; 16384       ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|asyn_fifo:u_camera_fifo|dual_port_sync:u_ram|altsyncram:ram_rtl_3|altsyncram_24d1:auto_generated                                          ;              ;
 ;                   |altsyncram_5ng1:altsyncram1| ; 0 (0)             ; 0 (0)        ; 16384       ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|asyn_fifo:u_camera_fifo|dual_port_sync:u_ram|altsyncram:ram_rtl_3|altsyncram_24d1:auto_generated|altsyncram_5ng1:altsyncram1              ;              ;
-;       |ov7670_controller:u_ov7670_config|       ; 313 (105)         ; 123 (65)     ; 0           ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config                                                                                                         ;              ;
+;       |ov7670_controller:u_ov7670_config|       ; 311 (105)         ; 123 (65)     ; 0           ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config                                                                                                         ;              ;
 ;          |I2C_Controller:u_i2c|                 ; 71 (71)           ; 58 (58)      ; 0           ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|I2C_Controller:u_i2c                                                                                    ;              ;
-;          |ov7670_registers:u_regs|              ; 137 (137)         ; 0 (0)        ; 0           ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|ov7670_registers:u_regs                                                                                 ;              ;
-;    |sdram_interface_de2:u_sdram_if|             ; 1160 (172)        ; 648 (69)     ; 45184       ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if                                                                                                                                          ;              ;
+;          |ov7670_registers:u_regs|              ; 135 (135)         ; 0 (0)        ; 0           ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|ov7670_registers:u_regs                                                                                 ;              ;
+;    |sdram_interface_de2:u_sdram_if|             ; 902 (173)         ; 480 (69)     ; 45184       ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if                                                                                                                                          ;              ;
 ;       |asyn_fifo:u_vga_fifo|                    ; 92 (92)           ; 70 (70)      ; 16384       ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|asyn_fifo:u_vga_fifo                                                                                                                     ;              ;
 ;          |dual_port_sync:u_ram|                 ; 0 (0)             ; 0 (0)        ; 16384       ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|asyn_fifo:u_vga_fifo|dual_port_sync:u_ram                                                                                                ;              ;
 ;             |altsyncram:ram_rtl_1|              ; 0 (0)             ; 0 (0)        ; 16384       ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|asyn_fifo:u_vga_fifo|dual_port_sync:u_ram|altsyncram:ram_rtl_1                                                                           ;              ;
 ;                |altsyncram_24d1:auto_generated| ; 0 (0)             ; 0 (0)        ; 16384       ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|asyn_fifo:u_vga_fifo|dual_port_sync:u_ram|altsyncram:ram_rtl_1|altsyncram_24d1:auto_generated                                            ;              ;
 ;                   |altsyncram_5ng1:altsyncram1| ; 0 (0)             ; 0 (0)        ; 16384       ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|asyn_fifo:u_vga_fifo|dual_port_sync:u_ram|altsyncram:ram_rtl_1|altsyncram_24d1:auto_generated|altsyncram_5ng1:altsyncram1                ;              ;
-;       |color_detector:u_color_detect|           ; 462 (462)         ; 277 (277)    ; 0           ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect                                                                                                            ;              ;
-;       |motion_detector:u_motion_detect|         ; 256 (248)         ; 107 (106)    ; 28800       ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect                                                                                                          ;              ;
+;       |color_detector:u_color_detect|           ; 237 (237)         ; 109 (109)    ; 0           ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect                                                                                                            ;              ;
+;       |motion_detector:u_motion_detect|         ; 223 (215)         ; 107 (106)    ; 28800       ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect                                                                                                          ;              ;
 ;          |altsyncram:frame_ram_rtl_2|           ; 8 (0)             ; 1 (0)        ; 28800       ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|altsyncram:frame_ram_rtl_2                                                                               ;              ;
 ;             |altsyncram_0rd1:auto_generated|    ; 8 (0)             ; 1 (0)        ; 28800       ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|altsyncram:frame_ram_rtl_2|altsyncram_0rd1:auto_generated                                                ;              ;
 ;                |altsyncram_2eh1:altsyncram1|    ; 8 (0)             ; 1 (1)        ; 28800       ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|altsyncram:frame_ram_rtl_2|altsyncram_0rd1:auto_generated|altsyncram_2eh1:altsyncram1                    ;              ;
 ;                   |decode_1oa:decode4|          ; 2 (2)             ; 0 (0)        ; 0           ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|altsyncram:frame_ram_rtl_2|altsyncram_0rd1:auto_generated|altsyncram_2eh1:altsyncram1|decode_1oa:decode4 ;              ;
 ;                   |mux_fib:mux5|                ; 6 (6)             ; 0 (0)        ; 0           ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|altsyncram:frame_ram_rtl_2|altsyncram_0rd1:auto_generated|altsyncram_2eh1:altsyncram1|mux_fib:mux5       ;              ;
-;       |sdram_controller_de2_50mhz:u_sdram_ctrl| ; 178 (178)         ; 125 (125)    ; 0           ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl                                                                                                  ;              ;
+;       |sdram_controller_de2_50mhz:u_sdram_ctrl| ; 177 (177)         ; 125 (125)    ; 0           ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl                                                                                                  ;              ;
 ;    |sdram_pll_50:u_pll|                         ; 0 (0)             ; 0 (0)        ; 0           ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|sdram_pll_50:u_pll                                                                                                                                                      ;              ;
 ;       |altpll:altpll_component|                 ; 0 (0)             ; 0 (0)        ; 0           ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|sdram_pll_50:u_pll|altpll:altpll_component                                                                                                                              ;              ;
 ;    |segment7:hex0|                              ; 6 (6)             ; 0 (0)        ; 0           ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|segment7:hex0                                                                                                                                                           ;              ;
@@ -285,10 +285,10 @@ Parallel compilation was disabled, but you have multiple processors available. E
 ;    |segment7:hex4|                              ; 6 (6)             ; 0 (0)        ; 0           ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|segment7:hex4                                                                                                                                                           ;              ;
 ;    |segment7:hex5|                              ; 7 (7)             ; 0 (0)        ; 0           ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|segment7:hex5                                                                                                                                                           ;              ;
 ;    |segment7:hex6|                              ; 3 (3)             ; 0 (0)        ; 0           ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|segment7:hex6                                                                                                                                                           ;              ;
-;    |vga_interface_de2:u_vga|                    ; 669 (630)         ; 106 (86)     ; 5120        ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|vga_interface_de2:u_vga                                                                                                                                                 ;              ;
+;    |vga_interface_de2:u_vga|                    ; 4280 (4241)       ; 5226 (5212)  ; 5120        ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|vga_interface_de2:u_vga                                                                                                                                                 ;              ;
 ;       |altsyncram:linebuf_rtl_0|                ; 0 (0)             ; 0 (0)        ; 5120        ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|vga_interface_de2:u_vga|altsyncram:linebuf_rtl_0                                                                                                                        ;              ;
 ;          |altsyncram_gbc1:auto_generated|       ; 0 (0)             ; 0 (0)        ; 5120        ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|vga_interface_de2:u_vga|altsyncram:linebuf_rtl_0|altsyncram_gbc1:auto_generated                                                                                         ;              ;
-;       |vga_core_de2:u_vga_core|                 ; 39 (39)           ; 20 (20)      ; 0           ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|vga_interface_de2:u_vga|vga_core_de2:u_vga_core                                                                                                                         ;              ;
+;       |vga_core_de2:u_vga_core|                 ; 39 (39)           ; 14 (14)      ; 0           ; 0            ; 0       ; 0         ; 0    ; 0            ; |DE2_Camera_System_SDRAM|vga_interface_de2:u_vga|vga_core_de2:u_vga_core                                                                                                                         ;              ;
 +-------------------------------------------------+-------------------+--------------+-------------+--------------+---------+-----------+------+--------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------+
 Note: For table entries with two numbers listed, the numbers in parentheses indicate the number of resources of the given type used by the specific entity alone. The numbers listed outside of parentheses indicate the total resources of the given type used by the specific entity and all of its sub-entities in the hierarchy.
 
@@ -391,18 +391,6 @@ Encoding Type:  One-Hot
 +----------------------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------+
 ; Register name                                                                                ; Reason for Removal                                                                      ;
 +----------------------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------+
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|blue_q                          ; Lost fanout                                                                             ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|streak_b[0..2]                  ; Lost fanout                                                                             ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|hold_b[0]                       ; Lost fanout                                                                             ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmin_run[0..9]                ; Lost fanout                                                                             ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmax_run[0..9]                ; Lost fanout                                                                             ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymin_run[0..9]                ; Lost fanout                                                                             ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymax_run[0..9]                ; Lost fanout                                                                             ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmin[0..9]                ; Lost fanout                                                                             ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmax[0..9]                ; Lost fanout                                                                             ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymin[0..9]                ; Lost fanout                                                                             ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymax[0..9]                ; Lost fanout                                                                             ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|hold_b[1..3]                    ; Lost fanout                                                                             ;
 ; sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|f_addr_q[12..13]      ; Stuck at GND due to stuck port data_in                                                  ;
 ; vga_interface_de2:u_vga|r_prev[4]                                                            ; Merged with vga_interface_de2:u_vga|r_prev[9]                                           ;
 ; vga_interface_de2:u_vga|r_prev[3]                                                            ; Merged with vga_interface_de2:u_vga|r_prev[8]                                           ;
@@ -418,23 +406,15 @@ Encoding Type:  One-Hot
 ; vga_interface_de2:u_vga|b_prev[2]                                                            ; Merged with vga_interface_de2:u_vga|b_prev[7]                                           ;
 ; vga_interface_de2:u_vga|b_prev[1]                                                            ; Merged with vga_interface_de2:u_vga|b_prev[6]                                           ;
 ; vga_interface_de2:u_vga|b_prev[0]                                                            ; Merged with vga_interface_de2:u_vga|b_prev[5]                                           ;
+; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_r_xmax[0]                   ; Merged with sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_r_xmin[0]  ;
 ; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_r_ymin[0]                   ; Merged with sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_r_xmin[0]  ;
 ; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_r_ymax[0]                   ; Merged with sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_r_xmin[0]  ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_r_xmax[0]                   ; Merged with sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_r_xmin[0]  ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_g_xmax[0]                   ; Merged with sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_g_xmin[0]  ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_g_ymax[0]                   ; Merged with sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_g_ymin[0]  ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_y_ymin[0]                   ; Merged with sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_y_xmin[0]  ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_y_xmax[0]                   ; Merged with sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_y_xmin[0]  ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_y_ymax[0]                   ; Merged with sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_y_xmin[0]  ;
 ; sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|box_x_max[0]                  ; Merged with sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|box_x_min[0] ;
 ; sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|box_y_min[0]                  ; Merged with sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|box_x_min[0] ;
 ; sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|box_y_max[0]                  ; Merged with sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|box_x_min[0] ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_g_ymin[0]                   ; Merged with sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_g_xmin[0]  ;
 ; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_pos[2..9]                     ; Lost fanout                                                                             ;
 ; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|x_pos[2..9]                     ; Lost fanout                                                                             ;
 ; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_r_xmin[0]                   ; Stuck at GND due to stuck port data_in                                                  ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_g_xmin[0]                   ; Stuck at GND due to stuck port data_in                                                  ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_y_xmin[0]                   ; Stuck at GND due to stuck port data_in                                                  ;
 ; sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|box_x_min[0]                  ; Stuck at GND due to stuck port data_in                                                  ;
 ; sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|x_pos[1]                      ; Merged with sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|x_pos[1]       ;
 ; sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|x_pos[0]                      ; Merged with sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|x_pos[0]       ;
@@ -466,12 +446,12 @@ Encoding Type:  One-Hot
 ; vga_interface_de2:u_vga|linebuf_0_bypass[18]                                                 ; Merged with vga_interface_de2:u_vga|vga_core_de2:u_vga_core|h_cnt[9]                    ;
 ; vga_interface_de2:u_vga|linebuf_0_bypass[16]                                                 ; Merged with vga_interface_de2:u_vga|vga_core_de2:u_vga_core|h_cnt[8]                    ;
 ; vga_interface_de2:u_vga|linebuf_0_bypass[14]                                                 ; Merged with vga_interface_de2:u_vga|vga_core_de2:u_vga_core|h_cnt[7]                    ;
-; vga_interface_de2:u_vga|linebuf_0_bypass[12]                                                 ; Merged with vga_interface_de2:u_vga|vga_core_de2:u_vga_core|h_cnt[6]                    ;
-; vga_interface_de2:u_vga|linebuf_0_bypass[10]                                                 ; Merged with vga_interface_de2:u_vga|vga_core_de2:u_vga_core|h_cnt[5]                    ;
-; vga_interface_de2:u_vga|linebuf_0_bypass[8]                                                  ; Merged with vga_interface_de2:u_vga|vga_core_de2:u_vga_core|h_cnt[4]                    ;
-; vga_interface_de2:u_vga|linebuf_0_bypass[6]                                                  ; Merged with vga_interface_de2:u_vga|vga_core_de2:u_vga_core|h_cnt[3]                    ;
-; vga_interface_de2:u_vga|linebuf_0_bypass[4]                                                  ; Merged with vga_interface_de2:u_vga|vga_core_de2:u_vga_core|h_cnt[2]                    ;
-; vga_interface_de2:u_vga|linebuf_0_bypass[2]                                                  ; Merged with vga_interface_de2:u_vga|vga_core_de2:u_vga_core|h_cnt[1]                    ;
+; vga_interface_de2:u_vga|vga_core_de2:u_vga_core|h_cnt[1]                                     ; Merged with vga_interface_de2:u_vga|linebuf_0_bypass[2]                                 ;
+; vga_interface_de2:u_vga|vga_core_de2:u_vga_core|h_cnt[2]                                     ; Merged with vga_interface_de2:u_vga|linebuf_0_bypass[4]                                 ;
+; vga_interface_de2:u_vga|vga_core_de2:u_vga_core|h_cnt[3]                                     ; Merged with vga_interface_de2:u_vga|linebuf_0_bypass[6]                                 ;
+; vga_interface_de2:u_vga|vga_core_de2:u_vga_core|h_cnt[4]                                     ; Merged with vga_interface_de2:u_vga|linebuf_0_bypass[8]                                 ;
+; vga_interface_de2:u_vga|vga_core_de2:u_vga_core|h_cnt[5]                                     ; Merged with vga_interface_de2:u_vga|linebuf_0_bypass[10]                                ;
+; vga_interface_de2:u_vga|vga_core_de2:u_vga_core|h_cnt[6]                                     ; Merged with vga_interface_de2:u_vga|linebuf_0_bypass[12]                                ;
 ; sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|nxt_q~4               ; Lost fanout                                                                             ;
 ; sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|nxt_q~5               ; Lost fanout                                                                             ;
 ; sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|nxt_q~6               ; Lost fanout                                                                             ;
@@ -488,7 +468,7 @@ Encoding Type:  One-Hot
 ; camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|I2C_Controller:u_i2c|state~6 ; Lost fanout                                                                             ;
 ; camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|I2C_Controller:u_i2c|state~7 ; Lost fanout                                                                             ;
 ; camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|I2C_Controller:u_i2c|state~8 ; Lost fanout                                                                             ;
-; Total Number of Removed Registers = 195                                                      ;                                                                                         ;
+; Total Number of Removed Registers = 99                                                       ;                                                                                         ;
 +----------------------------------------------------------------------------------------------+-----------------------------------------------------------------------------------------+
 
 
@@ -507,12 +487,12 @@ Encoding Type:  One-Hot
 +----------------------------------------------+-------+
 ; Statistic                                    ; Value ;
 +----------------------------------------------+-------+
-; Total registers                              ; 1006  ;
-; Number of registers using Synchronous Clear  ; 105   ;
-; Number of registers using Synchronous Load   ; 62    ;
-; Number of registers using Asynchronous Clear ; 963   ;
+; Total registers                              ; 5958  ;
+; Number of registers using Synchronous Clear  ; 90    ;
+; Number of registers using Synchronous Load   ; 73    ;
+; Number of registers using Asynchronous Clear ; 795   ;
 ; Number of registers using Asynchronous Load  ; 0     ;
-; Number of registers using Clock Enable       ; 664   ;
+; Number of registers using Clock Enable       ; 5632  ;
 ; Number of registers using Preset             ; 0     ;
 +----------------------------------------------+-------+
 
@@ -527,20 +507,6 @@ Encoding Type:  One-Hot
 ; sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|cmd_q[2]              ; 1       ;
 ; sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|cmd_q[1]              ; 1       ;
 ; sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|cmd_q[0]              ; 1       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|g_ymin_run[0]                   ; 5       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|g_ymin_run[1]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|g_ymin_run[2]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|g_ymin_run[3]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|g_ymin_run[5]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|g_ymin_run[6]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|g_ymin_run[7]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|g_xmin_run[1]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|g_xmin_run[0]                   ; 5       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|g_xmin_run[2]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|g_xmin_run[3]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|g_xmin_run[4]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|g_xmin_run[5]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|g_xmin_run[8]                   ; 4       ;
 ; sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|x_min_run[3]                  ; 4       ;
 ; sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|x_min_run[2]                  ; 4       ;
 ; sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|x_min_run[1]                  ; 4       ;
@@ -555,41 +521,27 @@ Encoding Type:  One-Hot
 ; sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|y_min_run[5]                  ; 4       ;
 ; sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|y_min_run[6]                  ; 4       ;
 ; sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|y_min_run[7]                  ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_ymin_run[0]                   ; 5       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_ymin_run[1]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_ymin_run[2]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_ymin_run[3]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_ymin_run[5]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_ymin_run[6]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_ymin_run[7]                   ; 4       ;
+; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_xmin_run[2]                   ; 4       ;
 ; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_xmin_run[1]                   ; 4       ;
 ; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_xmin_run[0]                   ; 5       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_xmin_run[2]                   ; 4       ;
 ; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_xmin_run[3]                   ; 4       ;
 ; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_xmin_run[4]                   ; 4       ;
 ; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_xmin_run[5]                   ; 4       ;
 ; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_xmin_run[8]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_ymin_run[0]                   ; 5       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_ymin_run[1]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_ymin_run[2]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_ymin_run[3]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_ymin_run[5]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_ymin_run[6]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_ymin_run[7]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_xmin_run[1]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_xmin_run[0]                   ; 5       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_xmin_run[2]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_xmin_run[3]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_xmin_run[4]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_xmin_run[5]                   ; 4       ;
-; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_xmin_run[8]                   ; 4       ;
+; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_ymin_run[2]                   ; 4       ;
+; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_ymin_run[1]                   ; 4       ;
+; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_ymin_run[0]                   ; 5       ;
+; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_ymin_run[3]                   ; 4       ;
+; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_ymin_run[5]                   ; 4       ;
+; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_ymin_run[6]                   ; 4       ;
+; sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_ymin_run[7]                   ; 4       ;
 ; camera_interface_de2:u_camera|asyn_fifo:u_camera_fifo|empty                                  ; 1       ;
 ; sdram_interface_de2:u_sdram_if|wr_buf_q[0]                                                   ; 13      ;
 ; camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|I2C_Controller:u_i2c|sda_reg ; 2       ;
 ; camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|I2C_Controller:u_i2c|sda_oe  ; 2       ;
 ; sdram_interface_de2:u_sdram_if|asyn_fifo:u_vga_fifo|empty                                    ; 2       ;
 ; sdram_interface_de2:u_sdram_if|pending_buf_q[1]                                              ; 1       ;
-; Total number of inverted registers = 67                                                      ;         ;
+; Total number of inverted registers = 39                                                      ;         ;
 +----------------------------------------------------------------------------------------------+---------+
 
 
@@ -687,73 +639,56 @@ Encoding Type:  One-Hot
 +--------------------+-----------+---------------+----------------------+------------------------+------------+-----------------------------------------------------------------------------------------------------------------------------+
 ; Multiplexer Inputs ; Bus Width ; Baseline Area ; Area if Restructured ; Saving if Restructured ; Registered ; Example Multiplexer Output                                                                                                  ;
 +--------------------+-----------+---------------+----------------------+------------------------+------------+-----------------------------------------------------------------------------------------------------------------------------+
-; 3:1                ; 26 bits   ; 52 LEs        ; 26 LEs               ; 26 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|power_cnt[14]                      ;
-; 3:1                ; 6 bits    ; 12 LEs        ; 6 LEs                ; 6 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|I2C_Controller:u_i2c|bit_cnt[2]    ;
-; 3:1                ; 16 bits   ; 32 LEs        ; 16 LEs               ; 16 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|vga_interface_de2:u_vga|pix_q[5]                                                                   ;
-; 3:1                ; 36 bits   ; 72 LEs        ; 36 LEs               ; 36 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_y_ymin[6]                         ;
-; 3:1                ; 4 bits    ; 8 LEs         ; 4 LEs                ; 4 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|hold_y[2]                             ;
-; 3:1                ; 36 bits   ; 72 LEs        ; 36 LEs               ; 36 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_g_ymax[3]                         ;
-; 3:1                ; 4 bits    ; 8 LEs         ; 4 LEs                ; 4 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|hold_g[0]                             ;
-; 3:1                ; 36 bits   ; 72 LEs        ; 36 LEs               ; 36 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_r_xmin[9]                         ;
-; 3:1                ; 4 bits    ; 8 LEs         ; 4 LEs                ; 4 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|hold_r[1]                             ;
-; 3:1                ; 36 bits   ; 72 LEs        ; 36 LEs               ; 36 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|box_y_max[3]                        ;
-; 3:1                ; 4 bits    ; 8 LEs         ; 4 LEs                ; 4 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|hold_timer[0]                       ;
-; 3:1                ; 10 bits   ; 20 LEs        ; 10 LEs               ; 10 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|fifo_clear_cnt[3]                                                   ;
-; 4:1                ; 8 bits    ; 16 LEs        ; 8 LEs                ; 8 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|I2C_Controller:u_i2c|shift_reg[23] ;
-; 4:1                ; 15 bits   ; 30 LEs        ; 15 LEs               ; 15 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|I2C_Controller:u_i2c|shift_reg[5]  ;
-; 4:1                ; 3 bits    ; 6 LEs         ; 3 LEs                ; 3 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_xmin_run[6]                         ;
-; 4:1                ; 3 bits    ; 6 LEs         ; 3 LEs                ; 3 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|streak_y[0]                           ;
-; 4:1                ; 9 bits    ; 18 LEs        ; 9 LEs                ; 9 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_xmax_run[5]                         ;
-; 4:1                ; 3 bits    ; 6 LEs         ; 3 LEs                ; 3 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_ymin_run[4]                         ;
-; 4:1                ; 9 bits    ; 18 LEs        ; 9 LEs                ; 9 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_ymax_run[2]                         ;
-; 4:1                ; 3 bits    ; 6 LEs         ; 3 LEs                ; 3 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|g_xmin_run[9]                         ;
-; 4:1                ; 3 bits    ; 6 LEs         ; 3 LEs                ; 3 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|streak_g[1]                           ;
-; 4:1                ; 9 bits    ; 18 LEs        ; 9 LEs                ; 9 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|g_xmax_run[8]                         ;
-; 4:1                ; 3 bits    ; 6 LEs         ; 3 LEs                ; 3 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|g_ymin_run[9]                         ;
-; 4:1                ; 9 bits    ; 18 LEs        ; 9 LEs                ; 9 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|g_ymax_run[7]                         ;
-; 4:1                ; 3 bits    ; 6 LEs         ; 3 LEs                ; 3 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_xmin_run[9]                         ;
-; 4:1                ; 3 bits    ; 6 LEs         ; 3 LEs                ; 3 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|streak_r[1]                           ;
-; 4:1                ; 9 bits    ; 18 LEs        ; 9 LEs                ; 9 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_xmax_run[5]                         ;
+; 3:1                ; 26 bits   ; 52 LEs        ; 26 LEs               ; 26 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|power_cnt[10]                      ;
+; 3:1                ; 6 bits    ; 12 LEs        ; 6 LEs                ; 6 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|I2C_Controller:u_i2c|bit_cnt[4]    ;
+; 3:1                ; 16 bits   ; 32 LEs        ; 16 LEs               ; 16 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|vga_interface_de2:u_vga|pix_q[14]                                                                  ;
+; 3:1                ; 36 bits   ; 72 LEs        ; 36 LEs               ; 36 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_r_xmax[8]                         ;
+; 3:1                ; 4 bits    ; 8 LEs         ; 4 LEs                ; 4 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|hold_r[3]                             ;
+; 3:1                ; 36 bits   ; 72 LEs        ; 36 LEs               ; 36 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|box_y_min[2]                        ;
+; 3:1                ; 4 bits    ; 8 LEs         ; 4 LEs                ; 4 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|hold_timer[3]                       ;
+; 3:1                ; 10 bits   ; 20 LEs        ; 10 LEs               ; 10 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|fifo_clear_cnt[5]                                                   ;
+; 4:1                ; 8 bits    ; 16 LEs        ; 8 LEs                ; 8 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|I2C_Controller:u_i2c|shift_reg[18] ;
+; 4:1                ; 15 bits   ; 30 LEs        ; 15 LEs               ; 15 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|I2C_Controller:u_i2c|shift_reg[13] ;
+; 4:1                ; 3 bits    ; 6 LEs         ; 3 LEs                ; 3 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_xmin_run[6]                         ;
+; 4:1                ; 3 bits    ; 6 LEs         ; 3 LEs                ; 3 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|streak_r[2]                           ;
+; 4:1                ; 9 bits    ; 18 LEs        ; 9 LEs                ; 9 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_xmax_run[3]                         ;
 ; 4:1                ; 3 bits    ; 6 LEs         ; 3 LEs                ; 3 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_ymin_run[4]                         ;
-; 4:1                ; 9 bits    ; 18 LEs        ; 9 LEs                ; 9 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_ymax_run[4]                         ;
-; 4:1                ; 3 bits    ; 6 LEs         ; 3 LEs                ; 3 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|x_min_run[7]                        ;
-; 4:1                ; 9 bits    ; 18 LEs        ; 9 LEs                ; 9 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|x_max_run[1]                        ;
-; 4:1                ; 3 bits    ; 6 LEs         ; 3 LEs                ; 3 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|y_min_run[9]                        ;
-; 4:1                ; 9 bits    ; 18 LEs        ; 9 LEs                ; 9 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|y_max_run[6]                        ;
-; 4:1                ; 10 bits   ; 20 LEs        ; 10 LEs               ; 10 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|x_pos[8]                            ;
-; 4:1                ; 4 bits    ; 8 LEs         ; 4 LEs                ; 4 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|streak_cnt[3]                       ;
-; 5:1                ; 10 bits   ; 30 LEs        ; 10 LEs               ; 20 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|y_pos[7]                            ;
-; 5:1                ; 9 bits    ; 27 LEs        ; 18 LEs               ; 9 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|cap_y[5]                                                             ;
-; 5:1                ; 5 bits    ; 15 LEs        ; 10 LEs               ; 5 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|s_addr_q[2]                 ;
-; 5:1                ; 2 bits    ; 6 LEs         ; 2 LEs                ; 4 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|s_ba_q[0]                   ;
+; 4:1                ; 9 bits    ; 18 LEs        ; 9 LEs                ; 9 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_ymax_run[5]                         ;
+; 4:1                ; 3 bits    ; 6 LEs         ; 3 LEs                ; 3 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|x_min_run[9]                        ;
+; 4:1                ; 9 bits    ; 18 LEs        ; 9 LEs                ; 9 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|x_max_run[7]                        ;
+; 4:1                ; 3 bits    ; 6 LEs         ; 3 LEs                ; 3 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|y_min_run[8]                        ;
+; 4:1                ; 9 bits    ; 18 LEs        ; 9 LEs                ; 9 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|y_max_run[1]                        ;
+; 4:1                ; 10 bits   ; 20 LEs        ; 10 LEs               ; 10 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|x_pos[1]                              ;
+; 4:1                ; 4 bits    ; 8 LEs         ; 4 LEs                ; 4 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|streak_cnt[1]                       ;
+; 5:1                ; 10 bits   ; 30 LEs        ; 10 LEs               ; 20 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|y_pos[2]                            ;
+; 5:1                ; 9 bits    ; 27 LEs        ; 18 LEs               ; 9 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|cap_y[8]                                                             ;
+; 5:1                ; 5 bits    ; 15 LEs        ; 10 LEs               ; 5 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|s_addr_q[4]                 ;
+; 5:1                ; 2 bits    ; 6 LEs         ; 2 LEs                ; 4 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|s_ba_q[1]                   ;
 ; 5:1                ; 8 bits    ; 24 LEs        ; 8 LEs                ; 16 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|cmd_addr[7]                        ;
-; 7:1                ; 11 bits   ; 44 LEs        ; 22 LEs               ; 22 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|cap_x[8]                                                             ;
-; 7:1                ; 10 bits   ; 40 LEs        ; 10 LEs               ; 30 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|cam_flush_cnt_q[8]                                                  ;
-; 6:1                ; 9 bits    ; 36 LEs        ; 9 LEs                ; 27 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|burst_index_q[3]            ;
-; 7:1                ; 24 bits   ; 96 LEs        ; 24 LEs               ; 72 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|reset_cnt[3]                       ;
-; 7:1                ; 11 bits   ; 44 LEs        ; 11 LEs               ; 33 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|rd_page_q[6]                                                        ;
+; 7:1                ; 11 bits   ; 44 LEs        ; 22 LEs               ; 22 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|cap_x[10]                                                            ;
+; 7:1                ; 10 bits   ; 40 LEs        ; 10 LEs               ; 30 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|cam_flush_cnt_q[9]                                                  ;
+; 6:1                ; 9 bits    ; 36 LEs        ; 9 LEs                ; 27 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|burst_index_q[1]            ;
+; 7:1                ; 24 bits   ; 96 LEs        ; 24 LEs               ; 72 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|reset_cnt[9]                       ;
 ; 8:1                ; 9 bits    ; 45 LEs        ; 9 LEs                ; 36 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|delay_ctr_q[12]             ;
 ; 9:1                ; 2 bits    ; 12 LEs        ; 4 LEs                ; 8 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|f_addr_q[1]                 ;
-; 9:1                ; 6 bits    ; 36 LEs        ; 18 LEs               ; 18 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|delay_ctr_q[13]             ;
-; 9:1                ; 22 bits   ; 132 LEs       ; 44 LEs               ; 88 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|wr_page_q[0]                                                        ;
+; 9:1                ; 6 bits    ; 36 LEs        ; 18 LEs               ; 18 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|delay_ctr_q[10]             ;
+; 9:1                ; 22 bits   ; 132 LEs       ; 44 LEs               ; 88 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|wr_page_q[10]                                                       ;
+; 9:1                ; 6 bits    ; 36 LEs        ; 6 LEs                ; 30 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|rd_page_q[7]                                                        ;
+; 9:1                ; 5 bits    ; 30 LEs        ; 10 LEs               ; 20 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|rd_page_q[8]                                                        ;
 ; 13:1               ; 8 bits    ; 64 LEs        ; 32 LEs               ; 32 LEs                 ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|f_addr_q[7]                 ;
-; 3:1                ; 2 bits    ; 4 LEs         ; 4 LEs                ; 0 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|I2C_Controller:u_i2c|scl_reg       ;
-; 4:1                ; 6 bits    ; 12 LEs        ; 6 LEs                ; 6 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_xmin_run[4]                         ;
-; 4:1                ; 6 bits    ; 12 LEs        ; 6 LEs                ; 6 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_ymin_run[6]                         ;
-; 4:1                ; 6 bits    ; 12 LEs        ; 6 LEs                ; 6 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|g_xmin_run[3]                         ;
-; 4:1                ; 6 bits    ; 12 LEs        ; 6 LEs                ; 6 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|g_ymin_run[6]                         ;
+; 3:1                ; 2 bits    ; 4 LEs         ; 4 LEs                ; 0 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|I2C_Controller:u_i2c|sda_oe        ;
 ; 4:1                ; 6 bits    ; 12 LEs        ; 6 LEs                ; 6 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_xmin_run[2]                         ;
-; 4:1                ; 6 bits    ; 12 LEs        ; 6 LEs                ; 6 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_ymin_run[2]                         ;
-; 4:1                ; 6 bits    ; 12 LEs        ; 6 LEs                ; 6 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|x_min_run[4]                        ;
-; 4:1                ; 6 bits    ; 12 LEs        ; 6 LEs                ; 6 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|y_min_run[3]                        ;
+; 4:1                ; 6 bits    ; 12 LEs        ; 6 LEs                ; 6 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|r_ymin_run[3]                         ;
+; 4:1                ; 6 bits    ; 12 LEs        ; 6 LEs                ; 6 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|x_min_run[2]                        ;
+; 4:1                ; 6 bits    ; 12 LEs        ; 6 LEs                ; 6 LEs                  ; Yes        ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|y_min_run[1]                        ;
+; 3:1                ; 18 bits   ; 36 LEs        ; 36 LEs               ; 0 LEs                  ; No         ; |DE2_Camera_System_SDRAM|hex_xmin[9]                                                                                        ;
 ; 3:1                ; 13 bits   ; 26 LEs        ; 26 LEs               ; 0 LEs                  ; No         ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|I2C_Controller:u_i2c|state         ;
-; 5:1                ; 18 bits   ; 54 LEs        ; 36 LEs               ; 18 LEs                 ; No         ; |DE2_Camera_System_SDRAM|hex_ymin[7]                                                                                        ;
-; 5:1                ; 16 bits   ; 48 LEs        ; 48 LEs               ; 0 LEs                  ; No         ; |DE2_Camera_System_SDRAM|vga_interface_de2:u_vga|g_raw[3]                                                                   ;
-; 7:1                ; 10 bits   ; 40 LEs        ; 40 LEs               ; 0 LEs                  ; No         ; |DE2_Camera_System_SDRAM|vga_interface_de2:u_vga|VGA_R[5]                                                                   ;
-; 7:1                ; 10 bits   ; 40 LEs        ; 40 LEs               ; 0 LEs                  ; No         ; |DE2_Camera_System_SDRAM|vga_interface_de2:u_vga|VGA_B[5]                                                                   ;
-; 7:1                ; 10 bits   ; 40 LEs        ; 30 LEs               ; 10 LEs                 ; No         ; |DE2_Camera_System_SDRAM|vga_interface_de2:u_vga|VGA_G[9]                                                                   ;
-; 7:1                ; 2 bits    ; 8 LEs         ; 6 LEs                ; 2 LEs                  ; No         ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|Selector40                  ;
-; 7:1                ; 2 bits    ; 8 LEs         ; 4 LEs                ; 4 LEs                  ; No         ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|Selector39                  ;
+; 5:1                ; 10 bits   ; 30 LEs        ; 20 LEs               ; 10 LEs                 ; No         ; |DE2_Camera_System_SDRAM|vga_interface_de2:u_vga|VGA_R[0]                                                                   ;
+; 5:1                ; 10 bits   ; 30 LEs        ; 30 LEs               ; 0 LEs                  ; No         ; |DE2_Camera_System_SDRAM|vga_interface_de2:u_vga|VGA_B[9]                                                                   ;
+; 5:1                ; 10 bits   ; 30 LEs        ; 30 LEs               ; 0 LEs                  ; No         ; |DE2_Camera_System_SDRAM|vga_interface_de2:u_vga|VGA_G[5]                                                                   ;
+; 6:1                ; 16 bits   ; 64 LEs        ; 64 LEs               ; 0 LEs                  ; No         ; |DE2_Camera_System_SDRAM|vga_interface_de2:u_vga|r_raw[3]                                                                   ;
+; 7:1                ; 2 bits    ; 8 LEs         ; 6 LEs                ; 2 LEs                  ; No         ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|Selector31                  ;
+; 7:1                ; 2 bits    ; 8 LEs         ; 4 LEs                ; 4 LEs                  ; No         ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|Selector37                  ;
 ; 8:1                ; 2 bits    ; 10 LEs        ; 6 LEs                ; 4 LEs                  ; No         ; |DE2_Camera_System_SDRAM|camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|state_q                            ;
 ; 8:1                ; 10 bits   ; 50 LEs        ; 20 LEs               ; 30 LEs                 ; No         ; |DE2_Camera_System_SDRAM|sdram_interface_de2:u_sdram_if|sdram_controller_de2_50mhz:u_sdram_ctrl|Selector18                  ;
 +--------------------+-----------+---------------+----------------------+------------------------+------------+-----------------------------------------------------------------------------------------------------------------------------+
@@ -1565,11 +1500,11 @@ Note: In order to hide this table in the UI and the text report file, please set
 
 +-----------------------------------------------------+
 ; Port Connectivity Checks: "vga_interface_de2:u_vga" ;
-+---------------+-------+----------+------------------+
-; Port          ; Type  ; Severity ; Details          ;
-+---------------+-------+----------+------------------+
-; color_mode[3] ; Input ; Info     ; Stuck at GND     ;
-+---------------+-------+----------+------------------+
++------------------+-------+----------+---------------+
+; Port             ; Type  ; Severity ; Details       ;
++------------------+-------+----------+---------------+
+; color_mode[3..1] ; Input ; Info     ; Stuck at GND  ;
++------------------+-------+----------+---------------+
 
 
 +---------------------------------------------------------------------------------+
@@ -1640,7 +1575,7 @@ Note: In order to hide this table in the UI and the text report file, please set
 Info: *******************************************************************
 Info: Running Quartus II Analysis & Synthesis
     Info: Version 9.1 Build 350 03/24/2010 Service Pack 2 SJ Web Edition
-    Info: Processing started: Sun Jun 07 18:18:41 2026
+    Info: Processing started: Sun Jun 07 21:25:34 2026
 Info: Command: quartus_map --read_settings_files=on --write_settings_files=off DE2_CameraOV7670 -c DE2_CameraOV7670
 Info: Found 2 design units, including 2 entities, in source file asyn_fifo.v
     Info: Found entity 1: asyn_fifo
@@ -1659,6 +1594,7 @@ Info: Found 1 design units, including 1 entities, in source file ov7670_register
     Info: Found entity 1: ov7670_registers
 Info: Found 1 design units, including 1 entities, in source file sdram_controller_de2_50mhz.v
     Info: Found entity 1: sdram_controller_de2_50mhz
+Warning (10275): Verilog HDL Module Instantiation warning at sdram_interface_de2.v(245): ignored dangling comma in List of Port Connections
 Info: Found 1 design units, including 1 entities, in source file sdram_interface_de2.v
     Info: Found entity 1: sdram_interface_de2
 Info: Found 1 design units, including 1 entities, in source file sdram_pll_50.v
@@ -1674,7 +1610,7 @@ Info: Found 1 design units, including 1 entities, in source file segment7.v
 Info: Found 1 design units, including 1 entities, in source file color_detector.v
     Info: Found entity 1: color_detector
 Info: Elaborating entity "DE2_Camera_System_SDRAM" for the top level hierarchy
-Warning (10036): Verilog HDL or VHDL warning at DE2_Camera_System_SDRAM.v(66): object "mode_normal" assigned a value but never read
+Warning (10036): Verilog HDL or VHDL warning at DE2_Camera_System_SDRAM.v(64): object "mode_normal" assigned a value but never read
 Info: Elaborating entity "sdram_pll_50" for hierarchy "sdram_pll_50:u_pll"
 Info: Elaborating entity "altpll" for hierarchy "sdram_pll_50:u_pll|altpll:altpll_component"
 Warning: Variable or input pin "phasecounterselect" is defined but never used
@@ -1750,6 +1686,8 @@ Warning: Inferred RAM node "vga_interface_de2:u_vga|linebuf~0" from synchronous 
 Warning: Inferred dual-clock RAM node "sdram_interface_de2:u_sdram_if|asyn_fifo:u_vga_fifo|dual_port_sync:u_ram|ram~0" from synchronous design logic.  The read-during-write behavior of a dual-clock RAM is undefined and may not match the behavior of the original design.
 Warning: Inferred dual-clock RAM node "sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect|frame_ram~0" from synchronous design logic.  The read-during-write behavior of a dual-clock RAM is undefined and may not match the behavior of the original design.
 Warning: Inferred dual-clock RAM node "camera_interface_de2:u_camera|asyn_fifo:u_camera_fifo|dual_port_sync:u_ram|ram~0" from synchronous design logic.  The read-during-write behavior of a dual-clock RAM is undefined and may not match the behavior of the original design.
+Info: Found 1 instances of uninferred RAM logic
+    Info: RAM logic "vga_interface_de2:u_vga|linebuf" is uninferred due to asynchronous read logic
 Info: Inferred 4 megafunctions from design logic
     Info: Inferred altsyncram megafunction from the following design logic: "vga_interface_de2:u_vga|linebuf~0" 
         Info: Parameter OPERATION_MODE set to DUAL_PORT
@@ -1899,95 +1837,7 @@ Warning: Output pins are stuck at VCC or GND
     Warning (13410): Pin "HEX7[4]" is stuck at VCC
     Warning (13410): Pin "HEX7[5]" is stuck at VCC
     Warning (13410): Pin "HEX7[6]" is stuck at VCC
-Info: 128 registers lost all their fanouts during netlist optimizations. The first 128 are displayed below.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|blue_q" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|streak_b[2]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|streak_b[1]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|streak_b[0]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|hold_b[0]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmin_run[9]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmin_run[8]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmin_run[7]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmin_run[6]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmin_run[5]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmin_run[4]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmin_run[3]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmin_run[2]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmin_run[1]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmin_run[0]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmax_run[9]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmax_run[8]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmax_run[7]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmax_run[6]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmax_run[5]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmax_run[4]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmax_run[3]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmax_run[2]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmax_run[1]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_xmax_run[0]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymin_run[9]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymin_run[8]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymin_run[7]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymin_run[6]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymin_run[5]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymin_run[4]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymin_run[3]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymin_run[2]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymin_run[1]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymin_run[0]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymax_run[9]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymax_run[8]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymax_run[7]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymax_run[6]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymax_run[5]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymax_run[4]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymax_run[3]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymax_run[2]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymax_run[1]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|b_ymax_run[0]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmin[9]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmin[8]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmin[7]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmin[6]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmin[5]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmin[4]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmin[3]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmin[2]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmin[1]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmin[0]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmax[9]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmax[8]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmax[7]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmax[6]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmax[5]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmax[4]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmax[3]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmax[2]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmax[1]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_xmax[0]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymin[9]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymin[8]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymin[7]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymin[6]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymin[5]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymin[4]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymin[3]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymin[2]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymin[1]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymin[0]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymax[9]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymax[8]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymax[7]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymax[6]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymax[5]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymax[4]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymax[3]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymax[2]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymax[1]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|box_b_ymax[0]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|hold_b[3]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|hold_b[2]" lost all its fanouts during netlist optimizations.
-    Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|hold_b[1]" lost all its fanouts during netlist optimizations.
+Info: 40 registers lost all their fanouts during netlist optimizations. The first 40 are displayed below.
     Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_pos[7]" lost all its fanouts during netlist optimizations.
     Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_pos[6]" lost all its fanouts during netlist optimizations.
     Info: Register "sdram_interface_de2:u_sdram_if|color_detector:u_color_detect|y_pos[5]" lost all its fanouts during netlist optimizations.
@@ -2029,8 +1879,9 @@ Info: 128 registers lost all their fanouts during netlist optimizations. The fir
     Info: Register "camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|I2C_Controller:u_i2c|state~7" lost all its fanouts during netlist optimizations.
     Info: Register "camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|I2C_Controller:u_i2c|state~8" lost all its fanouts during netlist optimizations.
 Info: Generated suppressed messages file D:/Quartus_Project/FPGA_DE2_CameraOV7670/DE2_CameraOV7670.map.smsg
-Warning: Design contains 13 input pin(s) that do not drive logic
+Warning: Design contains 14 input pin(s) that do not drive logic
     Warning (15610): No output dependent on input pin "SW[0]"
+    Warning (15610): No output dependent on input pin "SW[4]"
     Warning (15610): No output dependent on input pin "SW[5]"
     Warning (15610): No output dependent on input pin "SW[6]"
     Warning (15610): No output dependent on input pin "SW[7]"
@@ -2043,18 +1894,18 @@ Warning: Design contains 13 input pin(s) that do not drive logic
     Warning (15610): No output dependent on input pin "SW[14]"
     Warning (15610): No output dependent on input pin "SW[15]"
     Warning (15610): No output dependent on input pin "SW[16]"
-Info: Implemented 3014 device resources after synthesis - the final resource count might be different
+Info: Implemented 11393 device resources after synthesis - the final resource count might be different
     Info: Implemented 31 input pins
     Info: Implemented 118 output pins
     Info: Implemented 17 bidirectional pins
-    Info: Implemented 2787 logic cells
+    Info: Implemented 11166 logic cells
     Info: Implemented 60 RAM segments
     Info: Implemented 1 PLLs
-Info: Quartus II Analysis & Synthesis was successful. 0 errors, 49 warnings
-    Info: Peak virtual memory: 251 megabytes
-    Info: Processing ended: Sun Jun 07 18:18:49 2026
-    Info: Elapsed time: 00:00:08
-    Info: Total CPU time (on all processors): 00:00:06
+Info: Quartus II Analysis & Synthesis was successful. 0 errors, 51 warnings
+    Info: Peak virtual memory: 261 megabytes
+    Info: Processing ended: Sun Jun 07 21:25:49 2026
+    Info: Elapsed time: 00:00:15
+    Info: Total CPU time (on all processors): 00:00:16
 
 
 +------------------------------------------+

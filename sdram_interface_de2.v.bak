@@ -1,39 +1,41 @@
 `timescale 1ns / 1ps
 // =============================================================
 // sdram_interface_de2.v
-//
 // QVGA 320x240 TRIPLE-BUFFER VERSION - STABLE FRAME PIPELINE
-// Ðã tích h?p lu?ng x? lý ?nh Image Processing (Motion Detector)
+// Xu ly luong xu ly anh Image Processing
+// (Motion Detector + Color Detector)
 // =============================================================
-
 module sdram_interface_de2(
     input  wire        clk,
     input  wire        rst_n,
-
     // VGA timing/frame sync
     input  wire        clk_vga,
     input  wire        vga_frame_start,
     input  wire        rd_en,
-
     // Camera frame sync
     input  wire        cam_frame_start,
-
     // Camera FIFO read side
     input  wire [9:0]  data_count_r,
     input  wire [15:0] f2s_data,
     output wire        f2s_data_valid,
-
     // VGA FIFO output
     output wire        empty_fifo,
     output wire [15:0] dout,
-
     // =========================================================
-    // NEW: T?a d? Bounding Box xu?t ra cho kh?i VGA hi?n th?
+    // Motion Detector: Toa do Bounding Box cho khoi VGA hien thi
     // =========================================================
     output wire [9:0]  box_x_min,
     output wire [9:0]  box_x_max,
     output wire [9:0]  box_y_min,
     output wire [9:0]  box_y_max,
+    // =========================================================
+    // Color Detector: 1 bounding box (chi mau do)
+    // =========================================================
+    output wire [9:0]  box_r_xmin,
+    output wire [9:0]  box_r_xmax,
+    output wire [9:0]  box_r_ymin,
+    output wire [9:0]  box_r_ymax,
+
 
     // SDRAM pins
     output wire        sdram_clk,
@@ -52,25 +54,20 @@ module sdram_interface_de2(
     // =========================================================
     localparam idle     = 1'b0;
     localparam burst_op = 1'b1;
-
     // QVGA: 320*240 = 76800 pixels = 300 bursts
     localparam [10:0] FRAME_BURSTS    = 11'd300;
     localparam [10:0] FRAME_LAST      = 11'd299;
-
     localparam [10:0] FRAME_MIN_VALID = 11'd298;
     localparam [9:0]  BURST_WORDS     = 10'd256;
-
     // Triple buffer page offsets
     localparam [11:0] BUFFER0_OFFSET = 12'd0;
     localparam [11:0] BUFFER1_OFFSET = 12'd300;
     localparam [11:0] BUFFER2_OFFSET = 12'd600;
-
     localparam [9:0] READ_LOW_WATERMARK      = 10'd768;
     localparam [9:0] READ_CRITICAL_WATERMARK = 10'd512;
     localparam [9:0] CAMERA_HIGH_WATERMARK   = 10'd512;
     localparam [9:0] VGA_FIFO_CLEAR_CYCLES   = 10'd700;
     localparam [9:0] CAM_FIFO_FLUSH_MAX      = 10'd512;
-
     // =========================================================
     // Main registers
     // =========================================================
@@ -86,29 +83,24 @@ module sdram_interface_de2(
     
     reg frame_complete_q;
     reg frame_complete_d;
-
     reg [1:0] wr_buf_q;
     reg [1:0] wr_buf_d;
     reg [1:0] rd_buf_q;
     reg [1:0] rd_buf_d;
     reg [1:0] pending_buf_q;
     reg [1:0] pending_buf_d;
-
     reg pending_valid_q;
     reg pending_valid_d;
     reg display_valid_q;
     reg display_valid_d;
-
     reg       cam_flush_q;
     reg       cam_flush_d;
     reg [9:0] cam_flush_cnt_q;
     reg [9:0] cam_flush_cnt_d;
     reg       cam_fifo_flush_rd;
-
     reg        rw;
     reg        rw_en;
     reg [13:0] f_addr;
-
     // =========================================================
     // SDRAM controller wires
     // =========================================================
@@ -116,18 +108,14 @@ module sdram_interface_de2(
     wire        s2f_data_valid;
     wire        ready;
     wire        ctrl_f2s_data_valid;
-
-    // Ð?c t? FIFO do Data ho?c do l?nh X? rác (Flush)
+    // Doc tu FIFO do Data hoac do lenh Xa rac (Flush)
     assign f2s_data_valid = ctrl_f2s_data_valid | cam_fifo_flush_rd;
-
     wire [9:0] data_count_w;
     wire       vga_fifo_full;
-
     // =========================================================
     // Synchronize VGA frame start into SDRAM clock domain
     // =========================================================
     reg vfs_s1, vfs_s2, vfs_s3;
-
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             vfs_s1 <= 1'b0;
@@ -140,7 +128,6 @@ module sdram_interface_de2(
         end
     end
     wire vga_frame_pulse_clk = vfs_s2 & ~vfs_s3;
-
     // =========================================================
     // Synchronize Camera Frame Start
     // =========================================================
@@ -150,7 +137,6 @@ module sdram_interface_de2(
         else        cam_fs_d <= cam_frame_start;
     end
     wire cam_frame_pulse_clk = cam_frame_start & ~cam_fs_d;
-
     // =========================================================
     // Clear VGA FIFO at VGA frame start
     // =========================================================
@@ -166,12 +152,10 @@ module sdram_interface_de2(
                 fifo_clear_cnt <= fifo_clear_cnt - 10'd1;
         end
     end
-
     wire vga_fifo_clearing = (fifo_clear_cnt != 10'd0);
     wire vga_fifo_rst_n    = rst_n & ~vga_fifo_clearing;
-
     // =========================================================
-    // Hàm tr? giúp d?a ch? Buffer
+    // Ham tro giup dia chi Buffer
     // =========================================================
     function [11:0] make_phys_page;
         input [1:0]  buf_sel;
@@ -187,7 +171,6 @@ module sdram_interface_de2(
             endcase
         end
     endfunction
-
     function [13:0] page_to_faddr;
         input [11:0] phys_page;
         reg [11:0] row;
@@ -198,7 +181,6 @@ module sdram_interface_de2(
             page_to_faddr = {row, bank};
         end
     endfunction
-
     function [1:0] choose_free_buf;
         input [1:0] rd_buf_in;
         input [1:0] pend_buf_in;
@@ -212,31 +194,51 @@ module sdram_interface_de2(
                 choose_free_buf = 2'd2;
         end
     endfunction
-
     // =========================================================
-    // Image Processing: Tích h?p kh?i phát hi?n chuy?n d?ng
+    // Image Processing: pixel_valid chung cho Motion + Color
+    // Lenh doc FIFO (ctrl_f2s_data_valid) di vao FIFO, mat 1 xung nhip
+    // de xuat data ra day 'f2s_data'. Ta tao tre tin hieu valid 1 xung.
     // =========================================================
-    // L?nh d?c FIFO (ctrl_f2s_data_valid) di vào FIFO, m?t 1 xung nh?p 
-    // d? xu?t data ra dây 'f2s_data'. Ta t?o tr? tín hi?u valid 1 xung.
     reg motion_pixel_valid;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)
             motion_pixel_valid <= 1'b0;
         else
-            motion_pixel_valid <= ctrl_f2s_data_valid; 
+            motion_pixel_valid <= ctrl_f2s_data_valid;
     end
 
+    // =========================================================
+    // Motion Detector
+    // =========================================================
     motion_detector u_motion_detect (
         .clk          (clk),
         .rst_n        (rst_n),
-        .frame_start  (cam_frame_pulse_clk), // Xung d?ng b? frame m?i
-        .pixel_valid  (motion_pixel_valid),  // Data f2s_data dã s?n sàng
-        .pixel_data   (f2s_data),            // Data l?y tr?c ti?p t? lu?ng ghi 
-        
-        .box_x_min        (box_x_min),
-        .box_x_max        (box_x_max),
-        .box_y_min        (box_y_min),
-        .box_y_max        (box_y_max)
+        .frame_start  (cam_frame_pulse_clk),
+        .pixel_valid  (motion_pixel_valid),
+        .pixel_data   (f2s_data),
+        .box_x_min    (box_x_min),
+        .box_x_max    (box_x_max),
+        .box_y_min    (box_y_min),
+        .box_y_max    (box_y_max)
+    );
+
+    // =========================================================
+    // Color Detector (y het motion_detector, cung dung motion_pixel_valid
+    // va f2s_data)
+    // =========================================================
+    color_detector u_color_detect (
+        .clk          (clk),
+        .rst_n        (rst_n),
+        .frame_start  (cam_frame_pulse_clk),
+        .pixel_valid  (motion_pixel_valid),
+        .pixel_data   (f2s_data),
+
+        .box_r_xmin   (box_r_xmin),
+        .box_r_xmax   (box_r_xmax),
+        .box_r_ymin   (box_r_ymin),
+        .box_r_ymax   (box_r_ymax),
+
+
     );
 
     // =========================================================
@@ -249,13 +251,11 @@ module sdram_interface_de2(
             rd_page_q        <= 11'd0;
             written_pages_q  <= 11'd0;
             frame_complete_q <= 1'b0;
-
             rd_buf_q         <= 2'd0;
             wr_buf_q         <= 2'd1;
             pending_buf_q    <= 2'd2;
             pending_valid_q  <= 1'b0;
             display_valid_q  <= 1'b0;
-
             cam_flush_q      <= 1'b0;
             cam_flush_cnt_q  <= 10'd0;
         end
@@ -265,55 +265,45 @@ module sdram_interface_de2(
             rd_page_q        <= rd_page_d;
             written_pages_q  <= written_pages_d;
             frame_complete_q <= frame_complete_d;
-
             wr_buf_q         <= wr_buf_d;
             rd_buf_q         <= rd_buf_d;
             pending_buf_q    <= pending_buf_d;
             pending_valid_q  <= pending_valid_d;
             display_valid_q  <= display_valid_d;
-
             cam_flush_q      <= cam_flush_d;
             cam_flush_cnt_q  <= cam_flush_cnt_d;
         end
     end
-
     // =========================================================
     // Arbitration Conditions
     // =========================================================
     wire cam_has_burst = (data_count_r >= BURST_WORDS);
     wire cam_urgent    = (data_count_r >= CAMERA_HIGH_WATERMARK);
     wire cam_can_write = cam_has_burst && !frame_complete_q;
-
     wire vga_needs_data = (data_count_w < READ_LOW_WATERMARK);
     wire vga_critical   = (data_count_w < READ_CRITICAL_WATERMARK);
     wire vga_can_read   = display_valid_q && !vga_fifo_clearing && !vga_frame_pulse_clk;
-
     always @(*) begin
         state_d          = state_q;
         wr_page_d        = wr_page_q;
         rd_page_d        = rd_page_q;
         written_pages_d  = written_pages_q;
         frame_complete_d = frame_complete_q;
-
         wr_buf_d         = wr_buf_q;
         rd_buf_d         = rd_buf_q;
         pending_buf_d    = pending_buf_q;
         pending_valid_d  = pending_valid_q;
         display_valid_d  = display_valid_q;
-
         cam_flush_d      = cam_flush_q;
         cam_flush_cnt_d  = cam_flush_cnt_q;
         cam_fifo_flush_rd = 1'b0;
-
         f_addr = 14'd0; rw = 1'b0; rw_en = 1'b0;
-
         if (cam_frame_pulse_clk) begin
             if (frame_complete_q || (written_pages_q >= FRAME_MIN_VALID)) begin
                 pending_buf_d   = wr_buf_q;
                 pending_valid_d = 1'b1;
                 wr_buf_d = choose_free_buf(rd_buf_q, wr_buf_q, 1'b1);
             end
-
             wr_page_d        = 11'd0;
             written_pages_d  = 11'd0;
             frame_complete_d = 1'b0;
@@ -383,7 +373,6 @@ module sdram_interface_de2(
                         end
                     end
                 end
-
                 burst_op: begin
                     if (ready) begin
                         if (vga_can_read && vga_critical) begin
@@ -425,25 +414,20 @@ module sdram_interface_de2(
             endcase
         end
     end
-
     // =========================================================
     // SDRAM controller
     // =========================================================
     sdram_controller_de2_50mhz u_sdram_ctrl (
         .clk              (clk),
         .rst_n            (rst_n),
-
         .rw               (rw),
         .rw_en            (rw_en),
         .f_addr           (f_addr),
-
         .f2s_data         (f2s_data),
         .s2f_data         (s2f_data),
         .s2f_data_valid   (s2f_data_valid),
-     
         .f2s_data_valid   (ctrl_f2s_data_valid),
         .ready            (ready),
-
         .s_clk            (sdram_clk),
         .s_cke            (sdram_cke),
         .s_cs_n           (sdram_cs_n),
@@ -456,12 +440,10 @@ module sdram_interface_de2(
         .HDQM             (sdram_dqm[1]),
         .s_dq             (sdram_dq)
     );
-
     // =========================================================
     // VGA FIFO
     // =========================================================
     wire fifo_write_sel = vga_fifo_rst_n && s2f_data_valid && !vga_fifo_full;
-
     asyn_fifo #(
         .DATA_WIDTH       (16),
         .FIFO_DEPTH_WIDTH (10)

@@ -1,0 +1,400 @@
+`timescale 1ns / 1ps
+// =============================================================
+// color_detector.v  — REVISED v3  (Ratio-based detection)
+//
+// THAY DOI KIEN TRUC CHINH:
+// Chuyen tu nguong tuyet doi (absolute threshold) sang
+// phat hien dua tren TI LE (ratio) giua cac kenh mau.
+//
+// Ly do: camera OV7670 co gain/white-balance khong on dinh,
+// gia tri tuyet doi cua R/G/B thay doi theo anh sang. Nhung
+// TI LE giua cac kenh mau (R/G, R/B, G/B) on dinh hon nhieu.
+//
+// Vi du mau DO:
+//   Anh sang: R=28, G=12, B=8  -> R/G=2.3, R/B=3.5
+//   Anh toi:  R=14, G=6,  B=4  -> R/G=2.3, R/B=3.5  (giong nhau!)
+//   Nguong tuyet doi that bai voi anh toi, ratio van dung.
+//
+// Ky thuat tinh ratio trong Verilog (khong co phep chia):
+//   "A > B * k"  <=>  "A*scale > B*k*scale"
+//   Thuc te dung: "A >= B + B*(k-1)"  hoac  "A*2 >= B*3"
+//   De tranh overflow: dung width mo rong (8-bit thi dung 10-bit)
+//
+// Nguong Ratio (co the chinh):
+//   DO:         R >= G * 1.8  VA  R >= B * 2.5  VA  R >= MIN_BRIGHT
+//   XANH LA:    G >= R * 1.6  VA  G >= B * 1.4  VA  G >= MIN_BRIGHT
+//   VANG:       R >= MIN_YR   VA  G >= MIN_YG   VA  B < MAX_YB
+//               VA R/G nam trong khoang [0.7 .. 1.4]
+//   XANH DUONG: B >= R * 2.0  VA  B >= G * 1.8  VA  B >= MIN_BRIGHT
+//
+// Interface: y het motion_detector.v, khong thay doi port.
+// =============================================================
+
+`timescale 1ns / 1ps
+// =============================================================
+// color_detector.v  -- FIXED v4
+// THAY DOI SO VOI v3:
+//
+// BUG #1 (GREEN bao trum ca frame):
+//   - Nguyen nhan: camera OV7670 bi cast xanh la. Tuong trang/
+//     tro thanh G cao hon R va B. Nguong cu G*5>=R*8 (1.6x) qua
+//     long, tuong trang cung qua.
+//   - Fix: doi thanh G*2>=R*5 (2.5x), them rang buoc tuyet doi
+//     R<=16 va B<=16. Tuong: G=47,R=22 -> 94 < 110 -> FAIL.
+//     Xanh that: G=55,R=8 -> 110 >= 40 -> PASS.
+//
+// BUG #2 (YELLOW khong phat hien):
+//   - Nguyen nhan: RGB565 co G 6-bit, R 5-bit. Vang that
+//     (R=G trong khong gian mau 8-bit) se co G6 ~= 2*R5
+//     (vi du R5=28, G6=52). Nguong cu G*20<=R*31 (G/R<=1.55)
+//     LON HON 2.0 -> vang LUON bi loai boi nguong hi. DAY LA
+//     BUG COR BAN NHAT.
+//   - Fix: doi thanh G*10>=R*12 (lo) va G*10<=R*27 (hi).
+//     Vang that (G6=52,R5=28): 520 in [336,756] -> PASS.
+//
+// BUG #3 (YELLOW phat hien nham RED):
+//   - Nguyen nhan: camera cast xanh lam do (R5=28) co G6=20-22.
+//     YEL_G_MIN cu la 22 -> do cast camera pass nguong.
+//   - Fix: tang YEL_G_MIN len 28. Do cast G=22 < 28 -> FAIL.
+//
+// FIX r_dom_g/r_dom_b: dung shift-add thay cho nhan he so
+//   tranh van de synthesis. r_dom_b: dung R*2>=B*5 (chinh xac
+//   hon nhan xet trong comment goc R*2>=B*5).
+// =============================================================
+module color_detector (
+    input  wire        clk,
+    input  wire        rst_n,
+    input  wire        frame_start,
+    input  wire        pixel_valid,
+    input  wire [15:0] pixel_data,    // RGB565
+    // Bbox mau do (Red)
+    output reg  [9:0]  box_r_xmin,
+    output reg  [9:0]  box_r_xmax,
+    output reg  [9:0]  box_r_ymin,
+    output reg  [9:0]  box_r_ymax,
+    // Bbox mau xanh la (Green)
+    output reg  [9:0]  box_g_xmin,
+    output reg  [9:0]  box_g_xmax,
+    output reg  [9:0]  box_g_ymin,
+    output reg  [9:0]  box_g_ymax,
+    // Bbox mau vang (Yellow)
+    output reg  [9:0]  box_y_xmin,
+    output reg  [9:0]  box_y_xmax,
+    output reg  [9:0]  box_y_ymin,
+    output reg  [9:0]  box_y_ymax,
+    // Bbox mau xanh duong (Blue)
+    output reg  [9:0]  box_b_xmin,
+    output reg  [9:0]  box_b_xmax,
+    output reg  [9:0]  box_b_ymin,
+    output reg  [9:0]  box_b_ymax
+);
+    // =========================================================
+    // NGUONG MAU -- chinh tai day neu can
+    // =========================================================
+    // Do sang toi thieu (tranh phat hien bong toi)
+    localparam [4:0] MIN_BRIGHT_RB = 5'd6;
+    localparam [5:0] MIN_BRIGHT_G  = 6'd10;
+
+    // --- MAU DO ---
+    // is_red: R >> G va R >> B theo ti le
+    // r_dom_g: R*8 >= G*7  (R/G >= 0.875, luc do R da cao hon nhieu)
+    // r_dom_b: R*2 >= B*5  (R/B >= 2.5)
+    // Them: R phai tuyet doi cao hon G/2 (loc do-den)
+
+    // --- MAU XANH LA (FIX) ---
+    // Camera OV7670 co green cast: tuong trang G/R ~ 2.1-2.5.
+    // De tranh false positive phai dung nguong cao:
+    //   g_dom_r: G*2 >= R*5 (G/R >= 2.5)
+    //   g_dom_b: G*2 >= B*6 (G/B >= 3.0)
+    //   Them rang buoc tuyet doi: R<=16, B<=16
+    localparam [4:0] G_R_MAX_ABS = 5'd16;
+    localparam [4:0] G_B_MAX_ABS = 5'd16;
+    localparam [5:0] G_G_MIN_ABS = 6'd30;  // G >= 30/63 ~ 48%
+
+    // --- MAU VANG (FIX) ---
+    // RGB565: G 6-bit, R 5-bit. Mau vang that (R=G=255 trong 8-bit)
+    // cho G6 ~ 2*R5. Vi du vang that: R5=28, G6=52, G/R=1.86.
+    // Nguong cu G/R<=1.55 LOAI vang that! Da sua.
+    //   lo: G*10 >= R*12  (G/R >= 1.2, cho phep cam-vang)
+    //   hi: G*10 <= R*27  (G/R <= 2.7, loai xanh la)
+    //   B < R*0.35: B*20 < R*7
+    localparam [4:0] YEL_R_MIN = 5'd16;  // R >= 16 (~52% 5-bit)
+    localparam [5:0] YEL_G_MIN = 6'd28;  // G >= 28 (tang tu 22 len 28, loc do cast)
+
+    // --- MAU XANH DUONG ---
+    // B*5 >= G*9 (B/G >= 1.??, B >= R*2
+    localparam [4:0] B_MIN_BRIGHT = 5'd6;
+
+    // Streak / size / hold
+    localparam [2:0] MIN_STREAK  = 3'd2;
+    localparam [9:0] MIN_W       = 10'd4;
+    localparam [9:0] MIN_H       = 10'd4;
+    localparam [3:0] HOLD_FRAMES = 4'd8;
+
+    // =========================================================
+    // 1. Bo dem toa do (khong gian 320x240)
+    // =========================================================
+    reg [9:0] x_pos, y_pos;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            x_pos <= 10'd0; y_pos <= 10'd0;
+        end else if (frame_start) begin
+            x_pos <= 10'd0; y_pos <= 10'd0;
+        end else if (pixel_valid) begin
+            if (x_pos == 10'd319) begin
+                x_pos <= 10'd0;
+                y_pos <= (y_pos == 10'd239) ? 10'd0 : y_pos + 1'b1;
+            end else
+                x_pos <= x_pos + 1'b1;
+        end
+    end
+
+    // Lay mau luoi 4x4
+    wire pixel_sample = pixel_valid && (x_pos[1:0] == 2'b00) && (y_pos[1:0] == 2'b00);
+
+    // =========================================================
+    // 2. Tach RGB tu RGB565
+    // =========================================================
+    wire [4:0] px_r = pixel_data[15:11];  // 5-bit (0-31)
+    wire [5:0] px_g = pixel_data[10:5];   // 6-bit (0-63)
+    wire [4:0] px_b = pixel_data[4:0];    // 5-bit (0-31)
+
+    // Mo rong chieu rong bit cho phep nhan
+    wire [9:0]  r10 = {5'b0, px_r};
+    wire [10:0] g11 = {5'b0, px_g};
+    wire [9:0]  b10 = {5'b0, px_b};
+
+    // =========================================================
+    // 3. Phat hien mau bang ti le (ratio-based)
+    // =========================================================
+
+    // --- MAU DO ---
+    // r_dom_g: R*8 >= G*7  (shift-add, khong nhan)
+    wire r_dom_g = ({r10, 3'b0} >= {g11, 2'b0} + {g11, 1'b0} + g11);
+    //              R*8      >=   G*4   +   G*2   +  G = G*7
+
+    // r_dom_b: R*2 >= B*5
+    wire r_dom_b = ({r10, 1'b0} >= {b10, 2'b0} + b10);
+    //              R*2      >=   B*4   +  B = B*5
+
+    wire is_red  = (px_r >= MIN_BRIGHT_RB)
+                && (px_r > px_g[5:1])        // R > G/2 (loc do toi)
+                && r_dom_g && r_dom_b;
+
+    // --- MAU XANH LA (FIX: ketat)---
+    // g_dom_r: G*2 >= R*5  (G/R >= 2.5)
+    wire g_dom_r = ({g11, 1'b0} >= {r10, 2'b0} + r10);
+    //              G*2      >=  R*4  +  R = R*5
+
+    // g_dom_b: G*2 >= B*6  (G/B >= 3.0)
+    wire g_dom_b = ({g11, 1'b0} >= {b10, 2'b0} + {b10, 1'b0});
+    //              G*2      >=  B*4  +  B*2 = B*6
+
+    wire is_green = (px_g >= G_G_MIN_ABS)    // G >= 30 (tuyet doi)
+                 && (px_r <= G_R_MAX_ABS)    // R <= 16 (FIX: loai tuong xanh)
+                 && (px_b <= G_B_MAX_ABS)    // B <= 16 (FIX: loai tuong xanh)
+                 && g_dom_r && g_dom_b;
+
+    // --- MAU VANG (FIX: sua ratio cho RGB565) ---
+    // yel_g_lo: G*10 >= R*12  (G/R >= 1.2)
+    wire yel_g_lo = ({g11, 3'b0} + {g11, 1'b0} >= {r10, 3'b0} + {r10, 2'b0});
+    //               G*8 + G*2          >=   R*8 + R*4 = R*12
+
+    // yel_g_hi: G*10 <= R*27  (G/R <= 2.7)
+    wire yel_g_hi = ({g11, 3'b0} + {g11, 1'b0} <= {r10, 4'b0} + {r10, 3'b0} + {r10, 1'b0} + r10);
+    //               G*10               <=   R*16+R*8+R*2+R = R*27
+
+    // yel_b_lo: B*20 < R*7  (B/R < 0.35)
+    wire yel_b_lo = ({b10, 4'b0} + {b10, 2'b0} < {r10, 2'b0} + {r10, 1'b0} + r10);
+    //               B*16 + B*4          <   R*4 + R*2 + R = R*7
+
+    wire is_yellow = (px_r >= YEL_R_MIN)     // R >= 16
+                  && (px_g >= YEL_G_MIN)     // G >= 28 (FIX: tang tu 22)
+                  && yel_g_lo && yel_g_hi && yel_b_lo;
+
+    // --- MAU XANH DUONG ---
+    // b_dom_r: B >= R*2
+    wire b_dom_r = (b10 >= {r10, 1'b0});
+
+    // b_dom_g: B*5 >= G*9
+    wire b_dom_g = ({b10, 2'b0} + b10 >= {g11, 3'b0} + g11);
+    //              B*4 + B = B*5    >=   G*8 + G = G*9
+
+    wire is_blue  = (px_b >= B_MIN_BRIGHT)
+                 && (px_b > px_r)
+                 && b_dom_r && b_dom_g;
+
+    // =========================================================
+    // 4. Pipeline delay 1 chu ky
+    // =========================================================
+    reg        pixel_sample_q;
+    reg [9:0]  x_pos_q, y_pos_q;
+    reg        red_q, green_q, yellow_q, blue_q;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            pixel_sample_q <= 1'b0;
+            x_pos_q <= 10'd0; y_pos_q <= 10'd0;
+            red_q <= 1'b0; green_q <= 1'b0;
+            yellow_q <= 1'b0; blue_q <= 1'b0;
+        end else begin
+            pixel_sample_q <= pixel_sample;
+            x_pos_q <= x_pos;
+            y_pos_q <= y_pos;
+            if (pixel_sample) begin
+                red_q    <= is_red;
+                green_q  <= is_green;
+                yellow_q <= is_yellow;
+                blue_q   <= is_blue;
+            end
+        end
+    end
+
+    // =========================================================
+    // 5. Streak Filter
+    // =========================================================
+    reg [2:0] streak_r, streak_g, streak_y, streak_b;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            streak_r <= 3'd0; streak_g <= 3'd0;
+            streak_y <= 3'd0; streak_b <= 3'd0;
+        end else if (frame_start || (pixel_sample_q && (x_pos_q == 10'd0))) begin
+            streak_r <= 3'd0; streak_g <= 3'd0;
+            streak_y <= 3'd0; streak_b <= 3'd0;
+        end else if (pixel_sample_q) begin
+            streak_r <= red_q    ? ((&streak_r) ? streak_r : streak_r+1'b1) : 3'd0;
+            streak_g <= green_q  ? ((&streak_g) ? streak_g : streak_g+1'b1) : 3'd0;
+            streak_y <= yellow_q ? ((&streak_y) ? streak_y : streak_y+1'b1) : 3'd0;
+            streak_b <= blue_q   ? ((&streak_b) ? streak_b : streak_b+1'b1) : 3'd0;
+        end
+    end
+    wire valid_r = pixel_sample_q && red_q    && (streak_r >= MIN_STREAK);
+    wire valid_g = pixel_sample_q && green_q  && (streak_g >= MIN_STREAK);
+    wire valid_y = pixel_sample_q && yellow_q && (streak_y >= MIN_STREAK);
+    wire valid_b = pixel_sample_q && blue_q   && (streak_b >= MIN_STREAK);
+
+    // =========================================================
+    // 6. Bbox Accumulator + Hold Timer (scale x2: 320->640)
+    // =========================================================
+    reg [9:0] r_xmin_run,r_xmax_run,r_ymin_run,r_ymax_run;
+    reg [9:0] g_xmin_run,g_xmax_run,g_ymin_run,g_ymax_run;
+    reg [9:0] y_xmin_run,y_xmax_run,y_ymin_run,y_ymax_run;
+    reg [9:0] b_xmin_run,b_xmax_run,b_ymin_run,b_ymax_run;
+    reg [3:0] hold_r,hold_g,hold_y,hold_b;
+
+    // === MAU DO ===
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            r_xmin_run<=10'd319; r_xmax_run<=10'd0;
+            r_ymin_run<=10'd239; r_ymax_run<=10'd0;
+            box_r_xmin<=10'd0; box_r_xmax<=10'd0;
+            box_r_ymin<=10'd0; box_r_ymax<=10'd0; hold_r<=4'd0;
+        end else if (frame_start) begin
+            if ((r_xmax_run>=r_xmin_run)&&(r_ymax_run>=r_ymin_run)
+               &&((r_xmax_run-r_xmin_run)>=MIN_W)
+               &&((r_ymax_run-r_ymin_run)>=MIN_H)) begin
+                box_r_xmin<=r_xmin_run<<1; box_r_xmax<=r_xmax_run<<1;
+                box_r_ymin<=r_ymin_run<<1; box_r_ymax<=r_ymax_run<<1;
+                hold_r<=HOLD_FRAMES;
+            end else begin
+                if (hold_r>4'd0) hold_r<=hold_r-4'd1;
+                else begin box_r_xmin<=10'd0;box_r_xmax<=10'd0;
+                           box_r_ymin<=10'd0;box_r_ymax<=10'd0; end
+            end
+            r_xmin_run<=10'd319;r_xmax_run<=10'd0;
+            r_ymin_run<=10'd239;r_ymax_run<=10'd0;
+        end else if (valid_r) begin
+            if (x_pos_q<r_xmin_run) r_xmin_run<=x_pos_q;
+            if (x_pos_q>r_xmax_run) r_xmax_run<=x_pos_q;
+            if (y_pos_q<r_ymin_run) r_ymin_run<=y_pos_q;
+            if (y_pos_q>r_ymax_run) r_ymax_run<=y_pos_q;
+        end
+    end
+
+    // === MAU XANH LA ===
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            g_xmin_run<=10'd319; g_xmax_run<=10'd0;
+            g_ymin_run<=10'd239; g_ymax_run<=10'd0;
+            box_g_xmin<=10'd0; box_g_xmax<=10'd0;
+            box_g_ymin<=10'd0; box_g_ymax<=10'd0; hold_g<=4'd0;
+        end else if (frame_start) begin
+            if ((g_xmax_run>=g_xmin_run)&&(g_ymax_run>=g_ymin_run)
+               &&((g_xmax_run-g_xmin_run)>=MIN_W)
+               &&((g_ymax_run-g_ymin_run)>=MIN_H)) begin
+                box_g_xmin<=g_xmin_run<<1; box_g_xmax<=g_xmax_run<<1;
+                box_g_ymin<=g_ymin_run<<1; box_g_ymax<=g_ymax_run<<1;
+                hold_g<=HOLD_FRAMES;
+            end else begin
+                if (hold_g>4'd0) hold_g<=hold_g-4'd1;
+                else begin box_g_xmin<=10'd0;box_g_xmax<=10'd0;
+                           box_g_ymin<=10'd0;box_g_ymax<=10'd0; end
+            end
+            g_xmin_run<=10'd319;g_xmax_run<=10'd0;
+            g_ymin_run<=10'd239;g_ymax_run<=10'd0;
+        end else if (valid_g) begin
+            if (x_pos_q<g_xmin_run) g_xmin_run<=x_pos_q;
+            if (x_pos_q>g_xmax_run) g_xmax_run<=x_pos_q;
+            if (y_pos_q<g_ymin_run) g_ymin_run<=y_pos_q;
+            if (y_pos_q>g_ymax_run) g_ymax_run<=y_pos_q;
+        end
+    end
+
+    // === MAU VANG ===
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            y_xmin_run<=10'd319; y_xmax_run<=10'd0;
+            y_ymin_run<=10'd239; y_ymax_run<=10'd0;
+            box_y_xmin<=10'd0; box_y_xmax<=10'd0;
+            box_y_ymin<=10'd0; box_y_ymax<=10'd0; hold_y<=4'd0;
+        end else if (frame_start) begin
+            if ((y_xmax_run>=y_xmin_run)&&(y_ymax_run>=y_ymin_run)
+               &&((y_xmax_run-y_xmin_run)>=MIN_W)
+               &&((y_ymax_run-y_ymin_run)>=MIN_H)) begin
+                box_y_xmin<=y_xmin_run<<1; box_y_xmax<=y_xmax_run<<1;
+                box_y_ymin<=y_ymin_run<<1; box_y_ymax<=y_ymax_run<<1;
+                hold_y<=HOLD_FRAMES;
+            end else begin
+                if (hold_y>4'd0) hold_y<=hold_y-4'd1;
+                else begin box_y_xmin<=10'd0;box_y_xmax<=10'd0;
+                           box_y_ymin<=10'd0;box_y_ymax<=10'd0; end
+            end
+            y_xmin_run<=10'd319;y_xmax_run<=10'd0;
+            y_ymin_run<=10'd239;y_ymax_run<=10'd0;
+        end else if (valid_y) begin
+            if (x_pos_q<y_xmin_run) y_xmin_run<=x_pos_q;
+            if (x_pos_q>y_xmax_run) y_xmax_run<=x_pos_q;
+            if (y_pos_q<y_ymin_run) y_ymin_run<=y_pos_q;
+            if (y_pos_q>y_ymax_run) y_ymax_run<=y_pos_q;
+        end
+    end
+
+    // === MAU XANH DUONG ===
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            b_xmin_run<=10'd319; b_xmax_run<=10'd0;
+            b_ymin_run<=10'd239; b_ymax_run<=10'd0;
+            box_b_xmin<=10'd0; box_b_xmax<=10'd0;
+            box_b_ymin<=10'd0; box_b_ymax<=10'd0; hold_b<=4'd0;
+        end else if (frame_start) begin
+            if ((b_xmax_run>=b_xmin_run)&&(b_ymax_run>=b_ymin_run)
+               &&((b_xmax_run-b_xmin_run)>=MIN_W)
+               &&((b_ymax_run-b_ymin_run)>=MIN_H)) begin
+                box_b_xmin<=b_xmin_run<<1; box_b_xmax<=b_xmax_run<<1;
+                box_b_ymin<=b_ymin_run<<1; box_b_ymax<=b_ymax_run<<1;
+                hold_b<=HOLD_FRAMES;
+            end else begin
+                if (hold_b>4'd0) hold_b<=hold_b-4'd1;
+                else begin box_b_xmin<=10'd0;box_b_xmax<=10'd0;
+                           box_b_ymin<=10'd0;box_b_ymax<=10'd0; end
+            end
+            b_xmin_run<=10'd319;b_xmax_run<=10'd0;
+            b_ymin_run<=10'd239;b_ymax_run<=10'd0;
+        end else if (valid_b) begin
+            if (x_pos_q<b_xmin_run) b_xmin_run<=x_pos_q;
+            if (x_pos_q>b_xmax_run) b_xmax_run<=x_pos_q;
+            if (y_pos_q<b_ymin_run) b_ymin_run<=y_pos_q;
+            if (y_pos_q>b_ymax_run) b_ymax_run<=y_pos_q;
+        end
+    end
+
+endmodule

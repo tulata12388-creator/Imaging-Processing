@@ -1,6 +1,6 @@
-Info (10281): Verilog HDL Declaration information at DE2_Camera_System_SDRAM.v(49): object "HEX0" differs only in case from object "hex0" in the same scope
-Info (10281): Verilog HDL Declaration information at DE2_Camera_System_SDRAM.v(49): object "HEX1" differs only in case from object "hex1" in the same scope
-Info (10281): Verilog HDL Declaration information at DE2_Camera_System_SDRAM.v(49): object "HEX2" differs only in case from object "hex2" in the same scope
-Info (10281): Verilog HDL Declaration information at DE2_Camera_System_SDRAM.v(50): object "HEX4" differs only in case from object "hex4" in the same scope
-Info (10281): Verilog HDL Declaration information at DE2_Camera_System_SDRAM.v(50): object "HEX5" differs only in case from object "hex5" in the same scope
-Info (10281): Verilog HDL Declaration information at DE2_Camera_System_SDRAM.v(50): object "HEX6" differs only in case from object "hex6" in the same scope
+Info (10281): Verilog HDL Declaration information at DE2_Camera_System_SDRAM.v(48): object "HEX0" differs only in case from object "hex0" in the same scope
+Info (10281): Verilog HDL Declaration information at DE2_Camera_System_SDRAM.v(48): object "HEX1" differs only in case from object "hex1" in the same scope
+Info (10281): Verilog HDL Declaration information at DE2_Camera_System_SDRAM.v(48): object "HEX2" differs only in case from object "hex2" in the same scope
+Info (10281): Verilog HDL Declaration information at DE2_Camera_System_SDRAM.v(49): object "HEX4" differs only in case from object "hex4" in the same scope
+Info (10281): Verilog HDL Declaration information at DE2_Camera_System_SDRAM.v(49): object "HEX5" differs only in case from object "hex5" in the same scope
+Info (10281): Verilog HDL Declaration information at DE2_Camera_System_SDRAM.v(49): object "HEX6" differs only in case from object "hex6" in the same scope

@@ -1,5 +1,5 @@
 Flow report for DE2_CameraOV7670
-Sun Jun 07 18:19:00 2026
+Sun Jun 07 21:26:13 2026
 Quartus II Version 9.1 Build 350 03/24/2010 Service Pack 2 SJ Web Edition
 
 
@@ -38,7 +38,7 @@ applicable agreement for further details.
 +-----------------------------------------------------------------------------------+
 ; Flow Summary                                                                      ;
 +------------------------------------+----------------------------------------------+
-; Flow Status                        ; Successful - Sun Jun 07 18:19:00 2026        ;
+; Flow Status                        ; Successful - Sun Jun 07 21:26:12 2026        ;
 ; Quartus II Version                 ; 9.1 Build 350 03/24/2010 SP 2 SJ Web Edition ;
 ; Revision Name                      ; DE2_CameraOV7670                             ;
 ; Top-level Entity Name              ; DE2_Camera_System_SDRAM                      ;
@@ -46,10 +46,10 @@ applicable agreement for further details.
 ; Device                             ; EP2C35F672C6                                 ;
 ; Timing Models                      ; Final                                        ;
 ; Met timing requirements            ; Yes                                          ;
-; Total logic elements               ; 2,449 / 33,216 ( 7 % )                       ;
-;     Total combinational functions  ; 2,364 / 33,216 ( 7 % )                       ;
-;     Dedicated logic registers      ; 1,006 / 33,216 ( 3 % )                       ;
-; Total registers                    ; 1006                                         ;
+; Total logic elements               ; 8,333 / 33,216 ( 25 % )                      ;
+;     Total combinational functions  ; 5,694 / 33,216 ( 17 % )                      ;
+;     Dedicated logic registers      ; 5,958 / 33,216 ( 18 % )                      ;
+; Total registers                    ; 5958                                         ;
 ; Total pins                         ; 166 / 475 ( 35 % )                           ;
 ; Total virtual pins                 ; 0                                            ;
 ; Total memory bits                  ; 66,688 / 483,840 ( 14 % )                    ;
@@ -63,7 +63,7 @@ applicable agreement for further details.
 +-------------------+---------------------+
 ; Option            ; Setting             ;
 +-------------------+---------------------+
-; Start date & time ; 06/07/2026 18:18:42 ;
+; Start date & time ; 06/07/2026 21:25:35 ;
 ; Main task         ; Compilation         ;
 ; Revision Name     ; DE2_CameraOV7670    ;
 +-------------------+---------------------+
@@ -74,7 +74,7 @@ applicable agreement for further details.
 +------------------------------------+---------------------------------------------------------------+------------------+-------------------------+----------------+
 ; Assignment Name                    ; Value                                                         ; Default Value    ; Entity Name             ; Section Id     ;
 +------------------------------------+---------------------------------------------------------------+------------------+-------------------------+----------------+
-; COMPILER_SIGNATURE_ID              ; 105658697259523.178083112211536                               ; --               ; --                      ; --             ;
+; COMPILER_SIGNATURE_ID              ; 105658697259523.178084233408756                               ; --               ; --                      ; --             ;
 ; MAX_CORE_JUNCTION_TEMP             ; 85                                                            ; --               ; --                      ; --             ;
 ; MIN_CORE_JUNCTION_TEMP             ; 0                                                             ; --               ; --                      ; --             ;
 ; MISC_FILE                          ; D:/Quartus_Project/FPGA_DE2_CameraOV7670/DE2_CameraOV7670.dpf ; --               ; --                      ; --             ;
@@ -90,11 +90,11 @@ applicable agreement for further details.
 +-------------------------+--------------+-------------------------+---------------------+------------------------------------+
 ; Module Name             ; Elapsed Time ; Average Processors Used ; Peak Virtual Memory ; Total CPU Time (on all processors) ;
 +-------------------------+--------------+-------------------------+---------------------+------------------------------------+
-; Analysis & Synthesis    ; 00:00:07     ; 1.0                     ; 251 MB              ; 00:00:06                           ;
-; Fitter                  ; 00:00:06     ; 1.0                     ; 301 MB              ; 00:00:07                           ;
-; Assembler               ; 00:00:01     ; 1.0                     ; 270 MB              ; 00:00:01                           ;
-; Classic Timing Analyzer ; 00:00:00     ; 1.0                     ; 188 MB              ; 00:00:01                           ;
-; Total                   ; 00:00:14     ; --                      ; --                  ; 00:00:15                           ;
+; Analysis & Synthesis    ; 00:00:14     ; 1.0                     ; 261 MB              ; 00:00:15                           ;
+; Fitter                  ; 00:00:16     ; 1.0                     ; 322 MB              ; 00:00:17                           ;
+; Assembler               ; 00:00:02     ; 1.0                     ; 280 MB              ; 00:00:02                           ;
+; Classic Timing Analyzer ; 00:00:03     ; 1.0                     ; 237 MB              ; 00:00:03                           ;
+; Total                   ; 00:00:35     ; --                      ; --                  ; 00:00:37                           ;
 +-------------------------+--------------+-------------------------+---------------------+------------------------------------+
 
 

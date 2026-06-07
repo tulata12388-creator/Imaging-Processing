@@ -1628,42 +1628,6 @@ camera_interface_de2:u_camera
 
 # end
 # entity
-ov7670_controller
-# storage
-db|DE2_CameraOV7670.(4).cnf
-db|DE2_CameraOV7670.(4).cnf
-# logic_option {
-AUTO_RAM_RECOGNITION
-ON
-}
-# case_sensitive
-# source_file
-ov7670_controller.v
-f293401e4c1b2f24258494aedd2c6fe6
-8
-# internal_option {
-HDL_INITIAL_FANOUT_LIMIT
-OFF
-AUTO_RESOURCE_SHARING
-OFF
-AUTO_RAM_RECOGNITION
-ON
-AUTO_ROM_RECOGNITION
-ON
-IGNORE_VERILOG_INITIAL_CONSTRUCTS
-OFF
-VERILOG_CONSTANT_LOOP_LIMIT
-5000
-VERILOG_NON_CONSTANT_LOOP_LIMIT
-250
-}
-# hierarchies {
-camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config
-}
-# macro_sequence
-
-# end
-# entity
 I2C_Controller
 # storage
 db|DE2_CameraOV7670.(6).cnf
@@ -4927,42 +4891,6 @@ data0
 
 # end
 # entity
-ov7670_registers
-# storage
-db|DE2_CameraOV7670.(5).cnf
-db|DE2_CameraOV7670.(5).cnf
-# logic_option {
-AUTO_RAM_RECOGNITION
-ON
-}
-# case_sensitive
-# source_file
-ov7670_registers.v
-dc66823811d1c216bc78f6166b97865d
-8
-# internal_option {
-HDL_INITIAL_FANOUT_LIMIT
-OFF
-AUTO_RESOURCE_SHARING
-OFF
-AUTO_RAM_RECOGNITION
-ON
-AUTO_ROM_RECOGNITION
-ON
-IGNORE_VERILOG_INITIAL_CONSTRUCTS
-OFF
-VERILOG_CONSTANT_LOOP_LIMIT
-5000
-VERILOG_NON_CONSTANT_LOOP_LIMIT
-250
-}
-# hierarchies {
-camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|ov7670_registers:u_regs
-}
-# macro_sequence
-
-# end
-# entity
 altsyncram
 # storage
 db|DE2_CameraOV7670.(30).cnf
@@ -5648,6 +5576,114 @@ sdram_interface_de2:u_sdram_if|motion_detector:u_motion_detect
 
 # end
 # entity
+ov7670_controller
+# storage
+db|DE2_CameraOV7670.(4).cnf
+db|DE2_CameraOV7670.(4).cnf
+# logic_option {
+AUTO_RAM_RECOGNITION
+ON
+}
+# case_sensitive
+# source_file
+ov7670_controller.v
+f293401e4c1b2f24258494aedd2c6fe6
+8
+# internal_option {
+HDL_INITIAL_FANOUT_LIMIT
+OFF
+AUTO_RESOURCE_SHARING
+OFF
+AUTO_RAM_RECOGNITION
+ON
+AUTO_ROM_RECOGNITION
+ON
+IGNORE_VERILOG_INITIAL_CONSTRUCTS
+OFF
+VERILOG_CONSTANT_LOOP_LIMIT
+5000
+VERILOG_NON_CONSTANT_LOOP_LIMIT
+250
+}
+# hierarchies {
+camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config
+}
+# macro_sequence
+
+# end
+# entity
+ov7670_registers
+# storage
+db|DE2_CameraOV7670.(5).cnf
+db|DE2_CameraOV7670.(5).cnf
+# logic_option {
+AUTO_RAM_RECOGNITION
+ON
+}
+# case_sensitive
+# source_file
+ov7670_registers.v
+964e754cf85b6acdc220dee23eaa6
+8
+# internal_option {
+HDL_INITIAL_FANOUT_LIMIT
+OFF
+AUTO_RESOURCE_SHARING
+OFF
+AUTO_RAM_RECOGNITION
+ON
+AUTO_ROM_RECOGNITION
+ON
+IGNORE_VERILOG_INITIAL_CONSTRUCTS
+OFF
+VERILOG_CONSTANT_LOOP_LIMIT
+5000
+VERILOG_NON_CONSTANT_LOOP_LIMIT
+250
+}
+# hierarchies {
+camera_interface_de2:u_camera|ov7670_controller:u_ov7670_config|ov7670_registers:u_regs
+}
+# macro_sequence
+
+# end
+# entity
+color_detector
+# storage
+db|DE2_CameraOV7670.(11).cnf
+db|DE2_CameraOV7670.(11).cnf
+# logic_option {
+AUTO_RAM_RECOGNITION
+ON
+}
+# case_sensitive
+# source_file
+color_detector.v
+ee8a57aeafb2f36afbfc081666ab2b7
+8
+# internal_option {
+HDL_INITIAL_FANOUT_LIMIT
+OFF
+AUTO_RESOURCE_SHARING
+OFF
+AUTO_RAM_RECOGNITION
+ON
+AUTO_ROM_RECOGNITION
+ON
+IGNORE_VERILOG_INITIAL_CONSTRUCTS
+OFF
+VERILOG_CONSTANT_LOOP_LIMIT
+5000
+VERILOG_NON_CONSTANT_LOOP_LIMIT
+250
+}
+# hierarchies {
+sdram_interface_de2:u_sdram_if|color_detector:u_color_detect
+}
+# macro_sequence
+
+# end
+# entity
 DE2_Camera_System_SDRAM
 # storage
 db|DE2_CameraOV7670.(0).cnf
@@ -5659,7 +5695,7 @@ ON
 # case_sensitive
 # source_file
 de2_camera_system_sdram.v
-f61f9ed196305b31fc8d5b5bdf199e8d
+711b5ef75e16fd5ac74fdece7da9f3
 8
 # internal_option {
 HDL_INITIAL_FANOUT_LIMIT
@@ -5695,7 +5731,7 @@ ON
 # case_sensitive
 # source_file
 sdram_interface_de2.v
-b4cad960e3f851fa8553c0eddbb7636a
+b65486c9bf889224f04b4a69dd28ee1d
 8
 # internal_option {
 HDL_INITIAL_FANOUT_LIMIT
@@ -5720,42 +5756,6 @@ sdram_interface_de2:u_sdram_if
 
 # end
 # entity
-color_detector
-# storage
-db|DE2_CameraOV7670.(11).cnf
-db|DE2_CameraOV7670.(11).cnf
-# logic_option {
-AUTO_RAM_RECOGNITION
-ON
-}
-# case_sensitive
-# source_file
-color_detector.v
-ccdbd721ec77925cfb15ebd45311395
-8
-# internal_option {
-HDL_INITIAL_FANOUT_LIMIT
-OFF
-AUTO_RESOURCE_SHARING
-OFF
-AUTO_RAM_RECOGNITION
-ON
-AUTO_ROM_RECOGNITION
-ON
-IGNORE_VERILOG_INITIAL_CONSTRUCTS
-OFF
-VERILOG_CONSTANT_LOOP_LIMIT
-5000
-VERILOG_NON_CONSTANT_LOOP_LIMIT
-250
-}
-# hierarchies {
-sdram_interface_de2:u_sdram_if|color_detector:u_color_detect
-}
-# macro_sequence
-
-# end
-# entity
 vga_interface_de2
 # storage
 db|DE2_CameraOV7670.(33).cnf
@@ -5767,7 +5767,7 @@ ON
 # case_sensitive
 # source_file
 vga_interface_de2.v
-fdd059c838d2fcc4e315b36d695d61
+2be427b37eed1b778f1fa01d5728aad4
 8
 # internal_option {
 HDL_INITIAL_FANOUT_LIMIT

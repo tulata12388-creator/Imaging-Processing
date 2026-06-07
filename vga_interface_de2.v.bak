@@ -1,20 +1,50 @@
 `timescale 1ns / 1ps
-
+// =============================================================
+// vga_interface_de2.v  -- v2: them Image Flipping
+//
+// SW[2] = Flip ngang (Horizontal Mirror / Left-Right)
+//   src_x doc nguoc: linebuf[319 - src_x]
+//   Khong can them BRAM, xu ly hoan toan trong display layer.
+//
+// SW[3] = Rotate 180 (= Flip ngang + Flip doc)
+//   Flip ngang: doc linebuf[319 - src_x]
+//   Flip doc  : SDRAM duoc yeu cau doc nguoc thu tu dong
+//               (tu dong 239 ve dong 0). Signal flip_v
+//               duoc truyen xuong sdram_interface_de2.
+//
+// Nguyen tac doc FIFO va linebuf giu nguyen,
+// chi thay doi DIA CHI DOC cua linebuf khi flip_h active.
+//
+// color_mode[0]: bit0 = red detect overlay
+// =============================================================
 module vga_interface_de2(
     input  wire        clk_vga,
     input  wire        rst_n,
-
     input  wire        empty_fifo,
     input  wire [15:0] din,
-
     output reg         rd_en,
     output wire        vga_frame_start,
 
+    // Image Flipping mode
+    input  wire        flip_h,   // SW[2]: flip ngang
+    input  wire        flip_v,   // SW[3]: flip doc (sdram doc nguoc)
+                                 // flip_v = 1 -> rotate 180 (flip_h + flip_v)
+
+    // Motion detector bbox
     input  wire [9:0]  box_x_min,
     input  wire [9:0]  box_x_max,
     input  wire [9:0]  box_y_min,
     input  wire [9:0]  box_y_max,
-    input  wire        enable_box,   // Công t?c SW17
+    input  wire        enable_box,   // SW[17] - motion mode
+
+    // Color detector: chi bbox mau do
+    input  wire [9:0]  box_r_xmin,
+    input  wire [9:0]  box_r_xmax,
+    input  wire [9:0]  box_r_ymin,
+    input  wire [9:0]  box_r_ymax,
+
+    // color_mode[0]: bit0 = red
+    input  wire [3:0]  color_mode,
 
     output wire [9:0]  VGA_R,
     output wire [9:0]  VGA_G,
@@ -24,7 +54,6 @@ module vga_interface_de2(
     output wire        VGA_BLANK,
     output wire        VGA_SYNC
 );
-
     localparam DEBUG_EMPTY_COLOR = 1'b0;
 
     function [9:0] sat10;
@@ -53,16 +82,21 @@ module vga_interface_de2(
 
     assign vga_frame_start = (pixel_x == 10'd0) && (pixel_y == 10'd480);
 
+    // =========================================================================
+    // Line buffer (320 pixels x 16-bit)
+    // =========================================================================
     reg [15:0] linebuf [0:319];
+
+    // src_x: chi so pixel trong QVGA (0..319) tuong ung voi pixel_x VGA (0..639)
     wire [8:0] src_x;
-    assign src_x = pixel_x[9:1];
+    assign src_x = pixel_x[9:1];   // /2 vi VGA 640 x2 scale tu QVGA 320
 
     wire even_vga_line;
     wire even_vga_x;
-
     assign even_vga_line = ~pixel_y[0];
     assign even_vga_x    = ~pixel_x[0];
 
+    // Doc FIFO: chi o dong chan, pixel chan (moi pixel QVGA -> 2x2 VGA pixels)
     wire fifo_read_slot;
     assign fifo_read_slot = video_on && even_vga_line && even_vga_x;
 
@@ -81,30 +115,58 @@ module vga_interface_de2(
             rd_en   <= fifo_read_slot && !empty_fifo;
             rd_en_d <= rd_en;
             src_x_d <= src_x;
-
             if (rd_en_d) begin
-                pix_q <= din;
+                pix_q            <= din;
                 linebuf[src_x_d] <= din;
             end
-
             if (!video_on) begin
                 pix_q <= 16'd0;
             end
         end
     end
 
+    // =========================================================================
+    // Flip ngang: thay doi dia chi doc linebuf
+    //   Normal    : doc pixel tai src_x       (trai -> phai)
+    //   flip_h=1  : doc pixel tai 319-src_x   (nguoc lai)
+    //
+    // Luu y: flip_v tu minh khong lam gi trong VGA layer.
+    //   Flip doc duoc xu ly trong sdram_interface_de2 bang cach
+    //   dao thu tu doc frame (doc tu dong 239 ve 0).
+    //   Do do khi SW[3]=1, SDRAM da gui du lieu theo thu tu nguoc doc,
+    //   vga_interface chi can flip_h them la thanh rotate 180.
+    // =========================================================================
+    wire do_flip_h = flip_h || flip_v;  // ca rotate 180 cung can flip ngang
+
+    // Dia chi doc linebuf sau khi flip
+    wire [8:0] read_x_normal  = src_x;
+    wire [8:0] read_x_flipped = 9'd319 - src_x;
+    wire [8:0] read_x         = do_flip_h ? read_x_flipped : read_x_normal;
+
+    // =========================================================================
+    // Lay pixel hien thi:
+    //   Dong chan (even_vga_line): lay tu FIFO (pix_q - pixel moi nhat)
+    //   Dong le  (!even_vga_line): replay tu linebuf (dong truoc do)
+    //
+    // Khi flip_h: doi voi dong chan, doc tu linebuf[read_x] thay vi pix_q,
+    //   vi pix_q chi luu pixel tai src_x hien tai (khong phai read_x flipped).
+    //   Ta dung linebuf da duoc ghi day du ca dong, doc lai theo read_x.
+    //   Viec nay can rd_en_d them 1 cycle de linebuf duoc ghi truoc khi doc.
+    // =========================================================================
     wire [15:0] pixel565_live;
     wire [15:0] pixel565_replay;
     wire [15:0] pixel565_out;
 
-    assign pixel565_live   = pix_q;
-    assign pixel565_replay = linebuf[src_x];
-    assign pixel565_out = !video_on ? 16'd0 : (even_vga_line ? pixel565_live : pixel565_replay);
+    // Song: linebuf[read_x] luon cho ket qua dung sau khi ghi xong ca dong
+    // Dong chan: doc truc tiep tu linebuf theo read_x (da co du lieu cua dong nay)
+    // Dong le : replay linebuf cung theo read_x (dong truoc)
+    assign pixel565_live   = linebuf[read_x];
+    assign pixel565_replay = linebuf[read_x];
+    assign pixel565_out    = !video_on ? 16'd0 : pixel565_live;
 
     wire [4:0] r5;
     wire [5:0] g6;
     wire [4:0] b5;
-
     assign r5 = pixel565_out[15:11];
     assign g6 = pixel565_out[10:5];
     assign b5 = pixel565_out[4:0];
@@ -112,7 +174,6 @@ module vga_interface_de2(
     wire [9:0] r_raw;
     wire [9:0] g_raw;
     wire [9:0] b_raw;
-
     assign r_raw = {r5, r5};
     assign g_raw = {g6, g6[5:2]};
     assign b_raw = {b5, b5};
@@ -120,7 +181,6 @@ module vga_interface_de2(
     reg [9:0] r_prev;
     reg [9:0] g_prev;
     reg [9:0] b_prev;
-
     always @(posedge clk_vga or negedge rst_n) begin
         if (!rst_n) begin
             r_prev <= 10'd0;
@@ -128,23 +188,15 @@ module vga_interface_de2(
             b_prev <= 10'd0;
         end
         else begin
-            if (!video_on || (pixel_x == 10'd0)) begin
-                r_prev <= r_raw;
-                g_prev <= g_raw;
-                b_prev <= b_raw;
-            end
-            else begin
-                r_prev <= r_raw;
-                g_prev <= g_raw;
-                b_prev <= b_raw;
-            end
+            r_prev <= r_raw;
+            g_prev <= g_raw;
+            b_prev <= b_raw;
         end
     end
 
     wire [11:0] r_smooth_sum;
     wire [11:0] g_smooth_sum;
     wire [11:0] b_smooth_sum;
-
     assign r_smooth_sum = {2'b00, r_raw} + {2'b00, r_raw} + {2'b00, r_raw} + {2'b00, r_prev};
     assign g_smooth_sum = {2'b00, g_raw} + {2'b00, g_raw} + {2'b00, g_raw} + {2'b00, g_prev};
     assign b_smooth_sum = {2'b00, b_raw} + {2'b00, b_raw} + {2'b00, b_raw} + {2'b00, b_prev};
@@ -152,61 +204,78 @@ module vga_interface_de2(
     wire [9:0] r_filt;
     wire [9:0] g_filt;
     wire [9:0] b_filt;
-
     assign r_filt = (pixel_x == 10'd0) ? r_raw : r_smooth_sum[11:2];
     assign g_filt = (pixel_x == 10'd0) ? g_raw : g_smooth_sum[11:2];
     assign b_filt = (pixel_x == 10'd0) ? b_raw : b_smooth_sum[11:2];
 
-    wire [11:0] r_base;
-    wire [11:0] g_base;
-    wire [11:0] b_base;
-
-    assign r_base = {2'b00, r_filt};
-    assign g_base = {2'b00, g_filt};
-    assign b_base = {2'b00, b_filt};
+    wire [11:0] r_base = {2'b00, r_filt};
+    wire [11:0] g_base = {2'b00, g_filt};
+    wire [11:0] b_base = {2'b00, b_filt};
 
     wire [11:0] r_tmp;
     wire [11:0] g_tmp;
     wire [11:0] b_tmp;
-
     assign r_tmp = r_base + (r_base >> 2) + 12'd35;
     assign g_tmp = g_base - (g_base >> 2) - (g_base >> 3) + 12'd20;
     assign b_tmp = b_base + (b_base >> 4) + 12'd28;
 
-    wire [9:0] r_cam;
-    wire [9:0] g_cam;
-    wire [9:0] b_cam;
-
-    assign r_cam = sat10(r_tmp);
-    assign g_cam = sat10(g_tmp);
-    assign b_cam = sat10(b_tmp);
+    wire [9:0] r_cam = sat10(r_tmp);
+    wire [9:0] g_cam = sat10(g_tmp);
+    wire [9:0] b_cam = sat10(b_tmp);
 
     wire empty_debug_pixel;
     assign empty_debug_pixel = DEBUG_EMPTY_COLOR && fifo_read_slot && empty_fifo;
 
     // =========================================================================
-    // LOGIC V? KHUNG CH? NH?T (Ðã fix l?i d?ng b? t?a d? & Nét dôi)
+    // LOGIC VE KHUNG CHU NHAT - MOTION DETECTOR (trang)
     // =========================================================================
-    // So sánh tr?c ti?p v?i pixel_x, pixel_y. Thêm "+ 10'd1" d? t?o nét vi?n dày 2 pixel
-    wire is_border_x = (pixel_x == box_x_min) || (pixel_x == box_x_min + 10'd1) || 
-                       (pixel_x == box_x_max) || (pixel_x == box_x_max + 10'd1);
-                       
-    wire is_border_y = (pixel_y == box_y_min) || (pixel_y == box_y_min + 10'd1) || 
-                       (pixel_y == box_y_max) || (pixel_y == box_y_max + 10'd1);
-                       
-    wire in_range_x  = (pixel_x >= box_x_min)  && (pixel_x <= box_x_max + 10'd1);
-    wire in_range_y  = (pixel_y >= box_y_min)  && (pixel_y <= box_y_max + 10'd1);
+    wire is_border_x_mot = (pixel_x == box_x_min) || (pixel_x == box_x_min + 10'd1) ||
+                           (pixel_x == box_x_max) || (pixel_x == box_x_max + 10'd1);
+    wire is_border_y_mot = (pixel_y == box_y_min) || (pixel_y == box_y_min + 10'd1) ||
+                           (pixel_y == box_y_max) || (pixel_y == box_y_max + 10'd1);
+    wire in_range_x_mot  = (pixel_x >= box_x_min) && (pixel_x <= box_x_max + 10'd1);
+    wire in_range_y_mot  = (pixel_y >= box_y_min) && (pixel_y <= box_y_max + 10'd1);
+    wire draw_box_mot    = (is_border_x_mot && in_range_y_mot) || (is_border_y_mot && in_range_x_mot);
+    wire box_mot_valid   = (box_x_max > box_x_min) && (box_y_max > box_y_min) && enable_box;
 
-    wire draw_box    = (is_border_x && in_range_y) || (is_border_y && in_range_x);
-    
-    // Ch? v? khi có chuy?n d?ng h?p l? VÀ công t?c enable_box (SW17) dang b?t
-    wire box_valid   = (box_x_max > box_x_min) && (box_y_max > box_y_min) && enable_box;
+    // =========================================================================
+    // LOGIC VE KHUNG MAU DO (Red)
+    // =========================================================================
+    wire is_bx_r = (pixel_x == box_r_xmin) || (pixel_x == box_r_xmin + 10'd1) ||
+                   (pixel_x == box_r_xmax) || (pixel_x == box_r_xmax + 10'd1);
+    wire is_by_r = (pixel_y == box_r_ymin) || (pixel_y == box_r_ymin + 10'd1) ||
+                   (pixel_y == box_r_ymax) || (pixel_y == box_r_ymax + 10'd1);
+    wire in_rx_r = (pixel_x >= box_r_xmin) && (pixel_x <= box_r_xmax + 10'd1);
+    wire in_ry_r = (pixel_y >= box_r_ymin) && (pixel_y <= box_r_ymax + 10'd1);
+    wire draw_r  = (is_bx_r && in_ry_r) || (is_by_r && in_rx_r);
+    wire show_r  = draw_r && (box_r_xmax > box_r_xmin) && (box_r_ymax > box_r_ymin) && color_mode[0];
 
-    // Ph? màu Ð? (10'h3FF) cho khung
-    assign VGA_R = video_on ? ((draw_box && box_valid) ? 10'h3FF : (empty_debug_pixel ? 10'h180 : r_cam)) : 10'd0;
-    assign VGA_G = video_on ? ((draw_box && box_valid) ? 10'h000 : (empty_debug_pixel ? 10'h000 : g_cam)) : 10'd0;
-    assign VGA_B = video_on ? ((draw_box && box_valid) ? 10'h000 : (empty_debug_pixel ? 10'h000 : b_cam)) : 10'd0;
+    // =========================================================================
+    // MUX pixel cuoi cung:
+    // Thu tu uu tien: motion (trang) > red > cam
+    // =========================================================================
+    wire [9:0] out_r;
+    wire [9:0] out_g;
+    wire [9:0] out_b;
 
+    assign out_r = (box_mot_valid && draw_box_mot) ? 10'h3FF :
+                   show_r                          ? 10'h3FF :
+                   empty_debug_pixel               ? 10'h180 :
+                                                     r_cam;
+
+    assign out_g = (box_mot_valid && draw_box_mot) ? 10'h3FF :
+                   show_r                          ? 10'h000 :
+                   empty_debug_pixel               ? 10'h000 :
+                                                     g_cam;
+
+    assign out_b = (box_mot_valid && draw_box_mot) ? 10'h3FF :
+                   show_r                          ? 10'h000 :
+                   empty_debug_pixel               ? 10'h000 :
+                                                     b_cam;
+
+    assign VGA_R     = video_on ? out_r : 10'd0;
+    assign VGA_G     = video_on ? out_g : 10'd0;
+    assign VGA_B     = video_on ? out_b : 10'd0;
     assign VGA_BLANK = video_on;
     assign VGA_SYNC  = 1'b0;
 
