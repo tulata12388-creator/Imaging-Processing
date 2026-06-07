@@ -5,6 +5,11 @@
 //   - SW[1] : detect mau do -> hien bbox_red
 //   - SW[2] : Flip ngang (Horizontal Mirror, Left-Right)
 //   - SW[3] : Rotate 180 (Flip ngang + Flip doc)
+//   - SW[4] : Brightness  - Tang do sang
+//   - SW[5] : Grayscale   - Anh xam
+//   - SW[6] : Threshold   - Nhi phan hoa
+//   - SW[7] : Edge Overlay- Lam noi bien
+//   - SW[8] : Grid Overlay- Luoi phan vung
 //   - SW[17]: motion detection mode (giu nguyen)
 //   - HEX display: tuy theo SW mode hien thi toa do bbox
 // =============================================================
@@ -59,13 +64,24 @@ module DE2_Camera_System_SDRAM(
     // SW[1]  -> mode detect mau do
     // SW[2]  -> Flip ngang (Horizontal Mirror)
     // SW[3]  -> Rotate 180 (flip_h + flip_v)
+    // SW[4]  -> Brightness  (tang do sang)
+    // SW[5]  -> Grayscale   (anh xam)
+    // SW[6]  -> Threshold   (nhi phan hoa)
+    // SW[7]  -> Edge Overlay(lam noi bien)
+    // SW[8]  -> Grid Overlay(luoi phan vung)
     // SW[17] -> motion detection mode
     // =========================================================
-    wire mode_normal  = SW[0];
-    wire mode_red     = SW[1];
-    wire flip_h       = SW[2];   // Flip ngang: dao trai-phai trong VGA layer
-    wire flip_v       = SW[3];   // Flip doc  : SDRAM doc nguoc thu tu dong
-                                 // Rotate 180 = SW[3] (flip_h va flip_v deu active)
+    wire mode_normal       = SW[0];
+    wire mode_red          = SW[1];
+    wire flip_h            = SW[2];
+    wire flip_v            = SW[3];
+    wire brightness_mode   = SW[4];
+    wire grayscale_mode    = SW[5];
+    wire threshold_mode    = SW[6];
+    wire edge_mode         = SW[7];
+    wire grid_mode         = SW[8];
+    
+    wire compare_mode   = SW[9];   // Compare: nua trai=Inverse, nua phai=Natural
 
     wire enable_motion_mode = SW[17];
 
@@ -208,6 +224,14 @@ module DE2_Camera_System_SDRAM(
         // Image Flipping
         .flip_h          (flip_h),
         .flip_v          (flip_v),
+        // Compare mode SW[9]
+        .compare_mode    (compare_mode),
+        // Image Processing
+        .brightness_mode (brightness_mode),
+        .grayscale_mode  (grayscale_mode),
+        .threshold_mode  (threshold_mode),
+        .edge_mode       (edge_mode),
+        .grid_mode       (grid_mode),
         // Motion bbox
         .box_x_min       (box_x_min),
         .box_x_max       (box_x_max),

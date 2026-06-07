@@ -1,9 +1,14 @@
 `timescale 1ns / 1ps
 // =============================================================
-// vga_interface_de2.v  -- v2: them Image Flipping
+// vga_interface_de2.v  -- v4: Image Processing Modes (SW[4]-SW[8])
 //
-// SW[2] = flip_h: Flip ngang (Horizontal Mirror / Left-Right)
-// SW[3] = flip_v: Rotate 180 (Flip ngang + Flip doc)
+// SW[2] = flip_h      : Flip ngang (Horizontal Mirror / Left-Right)
+// SW[3] = flip_v      : Rotate 180 (Flip ngang + Flip doc)
+// SW[4] = brightness  : Tang do sang (+25% moi kenh RGB)
+// SW[5] = grayscale   : Anh xam (BT.601 luma: 0.299R + 0.587G + 0.114B)
+// SW[6] = threshold   : Nhi phan hoa (den/trang theo nguong luma=512)
+// SW[7] = edge_overlay: Lam noi bien (Sobel don gian dung linebuf)
+// SW[8] = grid_overlay: Luoi phan vung (16x16 o tren anh goc)
 //
 // --- Nguyen tac hoat dong ---
 // Camera QVGA 320x240 duoc scale 2x len VGA 640x480.
@@ -36,8 +41,15 @@ module vga_interface_de2(
     output wire        vga_frame_start,
 
     // Image Flipping mode
-    input  wire        flip_h,   // SW[2]: flip ngang (mirror trai-phai)
-    input  wire        flip_v,   // SW[3]: flip doc -> rotate 180 khi ket hop flip_h
+    input  wire        flip_h,        // SW[2]: flip ngang (mirror trai-phai)
+    input  wire        flip_v,        // SW[3]: flip doc -> rotate 180 khi ket hop flip_h
+
+    // Image Processing modes
+    input  wire        brightness_mode,  // SW[4]: tang do sang
+    input  wire        grayscale_mode,   // SW[5]: anh xam
+    input  wire        threshold_mode,   // SW[6]: nhi phan hoa
+    input  wire        edge_mode,        // SW[7]: lam noi bien
+    input  wire        grid_mode,        // SW[8]: luoi phan vung
 
     // Motion detector bbox
     input  wire [9:0]  box_x_min,
@@ -54,6 +66,8 @@ module vga_interface_de2(
 
     // color_mode[0] = red detect overlay
     input  wire [3:0]  color_mode,
+    // Compare mode: split-screen Inverse vs Natural
+    input  wire        compare_mode,  // SW[9]
 
     output wire [9:0]  VGA_R,
     output wire [9:0]  VGA_G,
@@ -202,6 +216,128 @@ module vga_interface_de2(
     wire [9:0] g_cam = sat10(g_base - (g_base >> 2) - (g_base >> 3) + 12'd20);
     wire [9:0] b_cam = sat10(b_base + (b_base >> 4) + 12'd28);
 
+    // =========================================================================
+    // Luma (Y) - dung chung cho Grayscale, Threshold, Edge
+    // Xap xi BT.601: Y = (77*R + 150*G + 29*B) >> 8
+    //   => voi R,G,B la 10-bit (0..1023):
+    //      Y = (77*r_cam + 150*g_cam + 29*b_cam) >> 8
+    //   Ket qua: 10-bit (0..1023)
+    // =========================================================================
+    wire [19:0] luma_sum = (20'd77  * {10'b0, r_cam})
+                         + (20'd150 * {10'b0, g_cam})
+                         + (20'd29  * {10'b0, b_cam});
+    wire [9:0] luma = luma_sum[17:8];   // >> 8, lay 10 bit
+
+    // =========================================================================
+    // Brightness mode (SW[4])
+    // Tang do sang: ket_qua = pixel + pixel/4  (+25% moi kenh)
+    // sat10() chong tran so (cap 0..1023)
+    // =========================================================================
+    wire [11:0] r_bright = {2'b0, r_cam} + {2'b0, r_cam[9:2]};
+    wire [11:0] g_bright = {2'b0, g_cam} + {2'b0, g_cam[9:2]};
+    wire [11:0] b_bright = {2'b0, b_cam} + {2'b0, b_cam[9:2]};
+
+    wire [9:0] r_after_bright = brightness_mode ? sat10(r_bright) : r_cam;
+    wire [9:0] g_after_bright = brightness_mode ? sat10(g_bright) : g_cam;
+    wire [9:0] b_after_bright = brightness_mode ? sat10(b_bright) : b_cam;
+
+    // =========================================================================
+    // Grayscale mode (SW[5])
+    // Thay the R,G,B bang gia tri Luma dong nhat -> anh xam
+    // Luma tinh tu r_cam/g_cam/b_cam (truoc brightness de giu chuan mau)
+    // =========================================================================
+    wire [9:0] r_after_gray = grayscale_mode ? luma : r_after_bright;
+    wire [9:0] g_after_gray = grayscale_mode ? luma : g_after_bright;
+    wire [9:0] b_after_gray = grayscale_mode ? luma : b_after_bright;
+
+    // =========================================================================
+    // Threshold mode (SW[6])
+    // Nguong cung dinh = 512 (chinh xac la 50% dai dong)
+    // pixel >= 512: trang (1023)  |  pixel < 512: den (0)
+    // Ap dung tren luma de dam bao output van la grayscale hop le
+    // =========================================================================
+    wire       thresh_white  = (luma >= 10'd512);
+    wire [9:0] thresh_val    = thresh_white ? 10'd1023 : 10'd0;
+
+    wire [9:0] r_after_thresh = threshold_mode ? thresh_val : r_after_gray;
+    wire [9:0] g_after_thresh = threshold_mode ? thresh_val : g_after_gray;
+    wire [9:0] b_after_thresh = threshold_mode ? thresh_val : b_after_gray;
+
+    // =========================================================================
+    // Edge Overlay mode (SW[7])
+    // Phuong phap: Gradient 1D theo chieu ngang (X)
+    //
+    //   edge_x = |luma(x) - luma(x-1)|
+    //
+    // luma(x-1) lay tu linebuf_luma[] -- mang rieng luu luma dong hien tai.
+    // Neu edge_x > EDGE_THRESH: to mau do len tren anh goc -> overlay.
+    // Khong lam bien doc (Y) vi can 2 dong linebuf -> phuc tap hon.
+    //
+    // Luong:
+    //   Dong chan: doc FIFO -> tinh luma -> ghi vao linebuf_luma[src_x_d]
+    //   Moi pixel: doc linebuf_luma[src_x_d - 1] lam luma trai
+    //   edge_x = |luma_cur - luma_left|
+    // =========================================================================
+    localparam [9:0] EDGE_THRESH = 10'd80;  // nguong gradient (co the chinh)
+
+    reg [9:0] linebuf_luma [0:319];   // luu luma dong hien tai de tinh gradient
+
+    // Ghi luma vao linebuf_luma cung luc voi linebuf pixel
+    // (src_x_d va rd_en_d da duoc tinh o block linebuf phia tren)
+    always @(posedge clk_vga) begin
+        if (rd_en_d)
+            linebuf_luma[src_x_d] <= luma;
+    end
+
+    // Doc luma pixel trai: src_x_d - 1 (neu src_x=0 thi lay 0)
+    wire [8:0] left_idx       = (src_x_d == 9'd0) ? 9'd0 : (src_x_d - 9'd1);
+    wire [9:0] luma_left      = linebuf_luma[left_idx];
+    wire [9:0] luma_cur       = luma;
+
+    // Gia tri tuyet doi |luma_cur - luma_left|
+    wire [9:0] grad_x = (luma_cur >= luma_left)
+                        ? (luma_cur - luma_left)
+                        : (luma_left - luma_cur);
+
+    wire is_edge = (grad_x > EDGE_THRESH);
+
+    // Overlay bien mau xanh la cay (Green) len tren anh goc
+    wire [9:0] r_after_edge  = (edge_mode && is_edge) ? 10'd0    : r_after_thresh;
+    wire [9:0] g_after_edge  = (edge_mode && is_edge) ? 10'd1023 : g_after_thresh;
+    wire [9:0] b_after_edge  = (edge_mode && is_edge) ? 10'd0    : b_after_thresh;
+
+    // =========================================================================
+    // Grid Overlay mode (SW[8])
+    // Ve luoi 16x16 o tren man hinh VGA (640x480).
+    // Khoang cach giua cac duong ke = 40 pixel VGA (tuong ung 20 pixel QVGA).
+    // Mau luoi: xanh duong (Cyan) de de nhin tren moi nen.
+    //
+    // Duong doc  : pixel_x % 40 == 0
+    // Duong ngang: pixel_y % 40 == 0
+    // =========================================================================
+    wire is_grid_x = (pixel_x ==10'd0)||(pixel_x ==10'd40)||(pixel_x ==10'd80)||
+                     (pixel_x ==10'd120)||(pixel_x==10'd160)||(pixel_x==10'd200)||
+                     (pixel_x ==10'd240)||(pixel_x==10'd280)||(pixel_x==10'd320)||
+                     (pixel_x ==10'd360)||(pixel_x==10'd400)||(pixel_x==10'd440)||
+                     (pixel_x ==10'd480)||(pixel_x==10'd520)||(pixel_x==10'd560)||
+                     (pixel_x ==10'd600)||(pixel_x==10'd640);
+    wire is_grid_y = (pixel_y ==10'd0)||(pixel_y ==10'd40)||(pixel_y ==10'd80)||
+                     (pixel_y ==10'd120)||(pixel_y==10'd160)||(pixel_y==10'd200)||
+                     (pixel_y ==10'd240)||(pixel_y==10'd280)||(pixel_y==10'd320)||
+                     (pixel_y ==10'd360)||(pixel_y==10'd400)||(pixel_y==10'd440)||
+                     (pixel_y ==10'd480);
+    wire is_grid    = is_grid_x || is_grid_y;
+
+    // Mau luoi: Cyan (R=0, G=max, B=max)
+    wire [9:0] r_after_grid = (grid_mode && is_grid) ? 10'd0    : r_after_edge;
+    wire [9:0] g_after_grid = (grid_mode && is_grid) ? 10'd1023 : g_after_edge;
+    wire [9:0] b_after_grid = (grid_mode && is_grid) ? 10'd1023 : b_after_edge;
+
+    // Ket noi vao r_proc/g_proc/b_proc de vao MUX cuoi
+    wire [9:0] r_proc = r_after_grid;
+    wire [9:0] g_proc = g_after_grid;
+    wire [9:0] b_proc = b_after_grid;
+
     wire empty_debug_pixel = DEBUG_EMPTY_COLOR && fifo_read_slot && empty_fifo;
 
     // =========================================================================
@@ -230,27 +366,48 @@ module vga_interface_de2(
     wire draw_r  = (is_bx_r&&in_ry_r)||(is_by_r&&in_rx_r);
     wire show_r  = draw_r&&(box_r_xmax>box_r_xmin)&&
                    (box_r_ymax>box_r_ymin)&&color_mode[0];
+    // =========================================================================
+    // Compare mode: duong chia doc giua man hinh (pixel_x == 319 hoac 320)
+    // =========================================================================
+    wire is_divider = compare_mode && ((pixel_x == 10'd319) || (pixel_x == 10'd320));
+
+    // Nua trai (0..319): Inverse color  -- Nua phai (320..639): Natural color
+    wire left_half  = (pixel_x < 10'd320);
+
+    // Mau dao nguoc (Inverse): ~ tren 10 bit = 1023 - gia tri
+    wire [9:0] r_inv = 10'd1023 - r_cam;
+    wire [9:0] g_inv = 10'd1023 - g_cam;
+    wire [9:0] b_inv = 10'd1023 - b_cam;
 
     // =========================================================================
-    // MUX pixel cuoi: motion > red > cam
+    // MUX pixel cuoi: motion > red > proc (brightness/... > cam)
     // =========================================================================
     wire [9:0] out_r =
+        is_divider                      ? 10'h3FF :
+        (compare_mode && left_half)     ? r_inv   :
+        (compare_mode && !left_half)    ? r_cam   :
         (box_mot_valid && draw_box_mot) ? 10'h3FF :
         show_r                          ? 10'h3FF :
         empty_debug_pixel               ? 10'h180 :
-                                          r_cam;
+                                          r_proc;
 
     wire [9:0] out_g =
+        is_divider                      ? 10'h3FF :
+        (compare_mode && left_half)     ? g_inv   :
+        (compare_mode && !left_half)    ? g_cam   :
         (box_mot_valid && draw_box_mot) ? 10'h3FF :
         show_r                          ? 10'h000 :
         empty_debug_pixel               ? 10'h000 :
-                                          g_cam;
+                                          g_proc;
 
     wire [9:0] out_b =
+		is_divider                      ? 10'h3FF :
+        (compare_mode && left_half)     ? b_inv   :
+        (compare_mode && !left_half)    ? b_cam   :
         (box_mot_valid && draw_box_mot) ? 10'h3FF :
         show_r                          ? 10'h000 :
         empty_debug_pixel               ? 10'h000 :
-                                          b_cam;
+                                          b_proc;
 
     assign VGA_R     = video_on ? out_r : 10'd0;
     assign VGA_G     = video_on ? out_g : 10'd0;
