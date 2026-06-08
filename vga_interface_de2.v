@@ -1,14 +1,17 @@
 `timescale 1ns / 1ps
 // =============================================================
-// vga_interface_de2.v  -- v4: Image Processing Modes (SW[4]-SW[8])
+// vga_interface_de2.v  -- v5: Thermal Camera Mode (SW[10])
 //
-// SW[2] = flip_h      : Flip ngang (Horizontal Mirror / Left-Right)
-// SW[3] = flip_v      : Rotate 180 (Flip ngang + Flip doc)
-// SW[4] = brightness  : Tang do sang (+25% moi kenh RGB)
-// SW[5] = grayscale   : Anh xam (BT.601 luma: 0.299R + 0.587G + 0.114B)
-// SW[6] = threshold   : Nhi phan hoa (den/trang theo nguong luma=512)
-// SW[7] = edge_overlay: Lam noi bien (Sobel don gian dung linebuf)
-// SW[8] = grid_overlay: Luoi phan vung (16x16 o tren anh goc)
+// SW[2]  = flip_h      : Flip ngang (Horizontal Mirror / Left-Right)
+// SW[3]  = flip_v      : Rotate 180 (Flip ngang + Flip doc)
+// SW[4]  = brightness  : Tang do sang (+25% moi kenh RGB)
+// SW[5]  = grayscale   : Anh xam (BT.601 luma: 0.299R + 0.587G + 0.114B)
+// SW[6]  = threshold   : Nhi phan hoa (den/trang theo nguong luma=512)
+// SW[7]  = edge_overlay: Lam noi bien (Sobel don gian dung linebuf)
+// SW[8]  = grid_overlay: Luoi phan vung (16x16 o tren anh goc)
+// SW[10] = thermal_mode: Gia mau nhiet (False Color / Thermal Camera)
+//          Chuyen anh xam (luma) -> palette mau nhiet 4 vung:
+//          Den(lanh) -> Xanh duong -> Cyan -> Vang -> Do(nong)
 //
 // --- Nguyen tac hoat dong ---
 // Camera QVGA 320x240 duoc scale 2x len VGA 640x480.
@@ -68,6 +71,9 @@ module vga_interface_de2(
     input  wire [3:0]  color_mode,
     // Compare mode: split-screen Inverse vs Natural
     input  wire        compare_mode,  // SW[9]
+
+    // Thermal Camera / False Color mode
+    input  wire        thermal_mode,  // SW[10]
 
     output wire [9:0]  VGA_R,
     output wire [9:0]  VGA_G,
@@ -338,6 +344,104 @@ module vga_interface_de2(
     wire [9:0] g_proc = g_after_grid;
     wire [9:0] b_proc = b_after_grid;
 
+    // =========================================================================
+    // Thermal Camera / False Color mode (SW[10])
+    //
+    // Palette DA DAO NGUOC: luma thap (toi/nguoi) = NONG, luma cao (sang/nen) = LANH
+    // Phu hop voi camera quang hoc: vung toi (da nguoi) cam nhan la "nong" hon nen sang.
+    //
+    // Buoc 1: Temporal Smoothing (chi dung cho thermal)
+    //   - Luu luma cua frame truoc vao linebuf_th_prev[0..319]
+    //   - Ghi vao linebuf_th_prev khi doc FIFO (rd_en_d), giong linebuf chinh
+    //   - Blend: luma_th = (luma * 3 + luma_prev * 1) >> 2  (75% hien tai + 25% truoc)
+    //   - Ket qua: giam flickering/nhieu giua cac frame, anh thermal muot hon
+    //   - QUAN TRONG: chi blend khi thermal_mode=1, else dung luma goc (khong lam xao tron)
+    //
+    // Buoc 2: Dao nguoc luma
+    //   luma_inv = 1023 - luma_th
+    //
+    // Buoc 3: Map luma_inv -> palette 4 vung (moi vung 256 cap):
+    //
+    //   Vung 1 (luma_inv   0..255):  Den  -> Xanh duong   R=0,        G=0,           B=luma_inv*4
+    //   Vung 2 (luma_inv 256..511):  Xanh duong -> Cyan   R=0,        G=off*4,       B=1023
+    //   Vung 3 (luma_inv 512..767):  Cyan -> Vang          R=off*4,    G=1023,        B=1023-off*4
+    //   Vung 4 (luma_inv 768..1023): Vang -> Do            R=1023,     G=1023-off*4,  B=0
+    //
+    // Ket qua:
+    //   Vung toi  (luma thap)  -> luma_inv cao  -> Do/Vang  (NONG)
+    //   Vung sang (luma cao)   -> luma_inv thap -> Xanh/Den (LANH)
+    //
+    // *4 = dich trai 2 bit (khong can DSP)
+    // off = offset trong vung hien tai (0..255), co guard tranh underflow unsigned
+    // =========================================================================
+
+    // -------------------------------------------------------------------------
+    // Buoc 1: Temporal Smoothing cho Thermal
+    //
+    // linebuf_th_prev[320]: luu luma cua DONG TRUOC (da duoc blend frame)
+    // Ghi cung luc voi linebuf chinh (rd_en_d + src_x_d)
+    // -------------------------------------------------------------------------
+    reg [9:0] linebuf_th_prev [0:319];  // line buffer luma frame truoc
+
+    always @(posedge clk_vga) begin
+        if (rd_en_d)
+            linebuf_th_prev[src_x_d] <= luma;  // luu luma dong hien tai
+    end
+
+    // Doc luma dong truoc tai cung vi tri src_x_d
+    wire [9:0] luma_prev_th = linebuf_th_prev[src_x_d];
+
+    // Blend: 75% luma hien tai + 25% luma dong truoc
+    // luma_th = (luma*3 + luma_prev) >> 2
+    // Dung 12-bit trung gian tranh tran: max = (1023*3 + 1023) = 4092 < 4096
+    wire [11:0] luma_blend_sum = ({2'b0, luma} + {2'b0, luma} + {2'b0, luma}
+                                  + {2'b0, luma_prev_th});
+    wire [9:0]  luma_th = luma_blend_sum[11:2];  // >> 2
+
+    // Chon: chi dung luma_th khi thermal_mode=1, else dung luma goc de khong anh huong mode khac
+    wire [9:0] luma_for_thermal = thermal_mode ? luma_th : luma;
+
+    // Buoc 2: Dao nguoc luma (dung luma_for_thermal)
+    wire [9:0] luma_inv = 10'd1023 - luma_for_thermal;
+
+    // Buoc 2: Offset trong moi vung - co guard (tranh underflow khi luma_inv < nguong)
+    wire [9:0] th_off2 = (luma_inv >= 10'd256) ? (luma_inv - 10'd256) : 10'd0;
+    wire [9:0] th_off3 = (luma_inv >= 10'd512) ? (luma_inv - 10'd512) : 10'd0;
+    wire [9:0] th_off4 = (luma_inv >= 10'd768) ? (luma_inv - 10'd768) : 10'd0;
+
+    // *4 = shift trai 2 bit, lay 8 bit thap -> 10 bit (max 255*4=1020 <= 1023, an toan)
+    wire [9:0] luma_inv_x4 = {luma_inv[7:0], 2'b00};  // Vung 1
+    wire [9:0] off2_x4     = {th_off2[7:0],  2'b00};  // Vung 2
+    wire [9:0] off3_x4     = {th_off3[7:0],  2'b00};  // Vung 3
+    wire [9:0] off4_x4     = {th_off4[7:0],  2'b00};  // Vung 4
+
+    // Kenh R: 0 -> 0 -> tang dan -> bao hoa 1023
+    wire [9:0] th_r =
+        (luma_inv < 10'd256) ? 10'd0    :  // Vung 1: R=0 (Den->Xanh duong)
+        (luma_inv < 10'd512) ? 10'd0    :  // Vung 2: R=0 (Xanh duong->Cyan)
+        (luma_inv < 10'd768) ? off3_x4  :  // Vung 3: R tang dan (Cyan->Vang)
+                               10'd1023;   // Vung 4: R bao hoa  (Vang->Do)
+
+    // Kenh G: 0 -> tang dan -> bao hoa -> giam dan
+    wire [9:0] th_g =
+        (luma_inv < 10'd256) ? 10'd0             :  // Vung 1: G=0
+        (luma_inv < 10'd512) ? off2_x4           :  // Vung 2: G tang dan
+        (luma_inv < 10'd768) ? 10'd1023          :  // Vung 3: G bao hoa
+                               (10'd1023-off4_x4);  // Vung 4: G giam dan
+
+    // Kenh B: tang dan -> bao hoa -> giam dan -> 0
+    // Guard them cho phep tru: chi tru khi off3_x4 <= 1023 (luon dung vi max=1020)
+    wire [9:0] th_b =
+        (luma_inv < 10'd256) ? luma_inv_x4          :  // Vung 1: B tang dan
+        (luma_inv < 10'd512) ? 10'd1023             :  // Vung 2: B bao hoa
+        (luma_inv < 10'd768) ? (10'd1023 - off3_x4) :  // Vung 3: B giam dan
+                               10'd0;                   // Vung 4: B=0
+
+    // Ap dung thermal mode: thay the r_proc/g_proc/b_proc
+    wire [9:0] r_final = thermal_mode ? th_r : r_proc;
+    wire [9:0] g_final = thermal_mode ? th_g : g_proc;
+    wire [9:0] b_final = thermal_mode ? th_b : b_proc;
+
     wire empty_debug_pixel = DEBUG_EMPTY_COLOR && fifo_read_slot && empty_fifo;
 
     // =========================================================================
@@ -380,7 +484,7 @@ module vga_interface_de2(
     wire [9:0] b_inv = 10'd1023 - b_cam;
 
     // =========================================================================
-    // MUX pixel cuoi: motion > red > proc (brightness/... > cam)
+    // MUX pixel cuoi: motion > red > thermal/proc (brightness/... > cam)
     // =========================================================================
     wire [9:0] out_r =
         is_divider                      ? 10'h3FF :
@@ -389,7 +493,7 @@ module vga_interface_de2(
         (box_mot_valid && draw_box_mot) ? 10'h3FF :
         show_r                          ? 10'h3FF :
         empty_debug_pixel               ? 10'h180 :
-                                          r_proc;
+                                          r_final;
 
     wire [9:0] out_g =
         is_divider                      ? 10'h3FF :
@@ -398,7 +502,7 @@ module vga_interface_de2(
         (box_mot_valid && draw_box_mot) ? 10'h3FF :
         show_r                          ? 10'h000 :
         empty_debug_pixel               ? 10'h000 :
-                                          g_proc;
+                                          g_final;
 
     wire [9:0] out_b =
 		is_divider                      ? 10'h3FF :
@@ -407,7 +511,7 @@ module vga_interface_de2(
         (box_mot_valid && draw_box_mot) ? 10'h3FF :
         show_r                          ? 10'h000 :
         empty_debug_pixel               ? 10'h000 :
-                                          b_proc;
+                                          b_final;
 
     assign VGA_R     = video_on ? out_r : 10'd0;
     assign VGA_G     = video_on ? out_g : 10'd0;

@@ -120,8 +120,16 @@ always @(*) begin
         // E7 usually gives better auto white balance than E5 here.
         8'h49: command = 16'h13_E7; // COM8: enable AGC/AEC/AWB
 
-        // Color bar OFF
-        8'h4A: command = 16'h42_00; // COM17: color bar OFF
+        // Color bar OFF - ghi COM17 sau khi AGC/AEC on
+        // Register 0x42 (COM17): bit[3]=0 -> color bar OFF
+        8'h4A: command = 16'h42_00; // COM17: DSP color bar OFF
+
+        // Ghi lai COM7 lan cuoi: dam bao RGB565 VGA, color bar OFF
+        // 0x12 bit[1]=0 (no color bar), bit[2]=1 (RGB), bit[0]=0 (VGA)
+        8'h4B: command = 16'h12_04; // COM7: RGB565 VGA, color bar OFF (re-write)
+
+        // Ghi lai TSLB: dam bao byte order RGB565 chinh xac
+        8'h4C: command = 16'h3A_04; // TSLB: byte swap OFF
 
         default: command = 16'hFF_FF;
     endcase

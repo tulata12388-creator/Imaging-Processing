@@ -10,6 +10,7 @@
 //   - SW[6] : Threshold   - Nhi phan hoa
 //   - SW[7] : Edge Overlay- Lam noi bien
 //   - SW[8] : Grid Overlay- Luoi phan vung
+//   - SW[10]: Thermal Camera - Gia mau nhiet (den->xanh->cyan->vang->do)
 //   - SW[17]: motion detection mode (giu nguyen)
 //   - HEX display: tuy theo SW mode hien thi toa do bbox
 // =============================================================
@@ -69,6 +70,8 @@ module DE2_Camera_System_SDRAM(
     // SW[6]  -> Threshold   (nhi phan hoa)
     // SW[7]  -> Edge Overlay(lam noi bien)
     // SW[8]  -> Grid Overlay(luoi phan vung)
+    // SW[9]  -> Compare mode (nua trai=Inverse, nua phai=Natural)
+    // SW[10] -> Thermal Camera (gia mau nhiet: den->xanh->cyan->vang->do)
     // SW[17] -> motion detection mode
     // =========================================================
     wire mode_normal       = SW[0];
@@ -82,6 +85,7 @@ module DE2_Camera_System_SDRAM(
     wire grid_mode         = SW[8];
     
     wire compare_mode   = SW[9];   // Compare: nua trai=Inverse, nua phai=Natural
+    wire thermal_mode   = SW[10];  // Thermal Camera: gia mau nhiet
 
     wire enable_motion_mode = SW[17];
 
@@ -226,6 +230,8 @@ module DE2_Camera_System_SDRAM(
         .flip_v          (flip_v),
         // Compare mode SW[9]
         .compare_mode    (compare_mode),
+        // Thermal Camera mode SW[10]
+        .thermal_mode    (thermal_mode),
         // Image Processing
         .brightness_mode (brightness_mode),
         .grayscale_mode  (grayscale_mode),
