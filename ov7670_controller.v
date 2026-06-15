@@ -45,8 +45,8 @@ module ov7670_controller(
     assign pwdn  = 1'b0;  // active high power down: 0 = camera on
 
     // Last register index in ov7670_registers.v
-    // Make sure ov7670_registers has entries from 8'h00 to 8'h4A.
-    localparam [7:0] REG_LAST = 8'h4A;
+    // Updated: entries from 8'h00 to 8'h4C (them 4B=COM7 re-write, 4C=TSLB re-write)
+    localparam [7:0] REG_LAST = 8'h4C;
 
     // State machine
     localparam [2:0] S_POWER_DELAY = 3'd0;

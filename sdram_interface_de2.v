@@ -314,7 +314,8 @@ module sdram_interface_de2(
             cam_flush_cnt_d  = 10'd0;
         end
         else if (vga_frame_pulse_clk) begin
-            // flip_v=1: bat dau tu trang cuoi (239*1.25 pages ~ FRAME_LAST)
+            // flip_v=1: bat dau tu trang cuoi (page 299), giam dan ve 0
+            // flip_v=0: bat dau tu trang dau (page 0), tang dan len 299
             rd_page_d = flip_v ? FRAME_LAST : 11'd0;
             if (pending_valid_q) begin
                 rd_buf_d        = pending_buf_q;
@@ -344,7 +345,7 @@ module sdram_interface_de2(
                         if (vga_can_read && vga_critical) begin
                             rw_en = 1'b1; rw = 1'b1;
                             f_addr = page_to_faddr(make_phys_page(rd_buf_q, rd_page_q));
-                            rd_page_d = flip_v ? ((rd_page_q == 11'd0) ? FRAME_LAST : (rd_page_q - 11'd1)) : ((rd_page_q == FRAME_LAST) ? 11'd0 : (rd_page_q + 11'd1));
+                            rd_page_d = flip_v ? (rd_page_q == 11'd0 ? 11'd0 : rd_page_q - 11'd1) : (rd_page_q == FRAME_LAST ? 11'd0 : rd_page_q + 11'd1);
                             state_d = burst_op;
                         end
                         else if (cam_can_write && cam_urgent) begin
@@ -361,7 +362,7 @@ module sdram_interface_de2(
                         else if (vga_can_read && vga_needs_data) begin
                             rw_en = 1'b1; rw = 1'b1;
                             f_addr = page_to_faddr(make_phys_page(rd_buf_q, rd_page_q));
-                            rd_page_d = flip_v ? ((rd_page_q == 11'd0) ? FRAME_LAST : (rd_page_q - 11'd1)) : ((rd_page_q == FRAME_LAST) ? 11'd0 : (rd_page_q + 11'd1));
+                            rd_page_d = flip_v ? (rd_page_q == 11'd0 ? 11'd0 : rd_page_q - 11'd1) : (rd_page_q == FRAME_LAST ? 11'd0 : rd_page_q + 11'd1);
                             state_d = burst_op;
                         end
                         else if (cam_can_write) begin
@@ -382,7 +383,7 @@ module sdram_interface_de2(
                         if (vga_can_read && vga_critical) begin
                             rw_en = 1'b1; rw = 1'b1;
                             f_addr = page_to_faddr(make_phys_page(rd_buf_q, rd_page_q));
-                            rd_page_d = flip_v ? ((rd_page_q == 11'd0) ? FRAME_LAST : (rd_page_q - 11'd1)) : ((rd_page_q == FRAME_LAST) ? 11'd0 : (rd_page_q + 11'd1));
+                            rd_page_d = flip_v ? (rd_page_q == 11'd0 ? 11'd0 : rd_page_q - 11'd1) : (rd_page_q == FRAME_LAST ? 11'd0 : rd_page_q + 11'd1);
                         end
                         else if (cam_can_write && cam_urgent) begin
                             rw_en = 1'b1; rw = 1'b0;
@@ -397,7 +398,7 @@ module sdram_interface_de2(
                         else if (vga_can_read && vga_needs_data) begin
                             rw_en = 1'b1; rw = 1'b1;
                             f_addr = page_to_faddr(make_phys_page(rd_buf_q, rd_page_q));
-                            rd_page_d = flip_v ? ((rd_page_q == 11'd0) ? FRAME_LAST : (rd_page_q - 11'd1)) : ((rd_page_q == FRAME_LAST) ? 11'd0 : (rd_page_q + 11'd1));
+                            rd_page_d = flip_v ? (rd_page_q == 11'd0 ? 11'd0 : rd_page_q - 11'd1) : (rd_page_q == FRAME_LAST ? 11'd0 : rd_page_q + 11'd1);
                         end
                         else if (cam_can_write) begin
                             rw_en = 1'b1; rw = 1'b0;

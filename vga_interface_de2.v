@@ -109,19 +109,20 @@ module vga_interface_de2(
         .pixel_y  (pixel_y)
     );
 
-    assign vga_frame_start = (pixel_x == 10'd0) && (pixel_y == 10'd480);
+    assign vga_frame_start = (pixel_x == 10'd0) && (pixel_y == 10'd481);
 
     // =========================================================================
     // Line buffer: 320 pixels x 16-bit
     // Ghi: moi dong chan, theo thu tu src_x (trai -> phai)
     // Doc: dong le replay, hoac dong chan neu flip (doc nguoc tu dong tren)
     // =========================================================================
-    reg [15:0] linebuf [0:319];
+    reg [15:0] linebuf      [0:319]; // dong hien tai (ghi khi doc FIFO)
+    reg [15:0] linebuf_prev [0:319]; // snapshot dong TREN da hoan chinh (dung cho flip)
 
     // src_x: index pixel QVGA [0..319] tuong ung pixel_x VGA [0..639]
-    wire [8:0] src_x      = pixel_x[9:1];
+    wire [8:0] src_x         = pixel_x[9:1];
     wire       even_vga_line = ~pixel_y[0];
-    wire       even_vga_x   = ~pixel_x[0];
+    wire       even_vga_x    = ~pixel_x[0];
 
     // Slot doc FIFO: chi dong chan, pixel chan
     wire fifo_read_slot = video_on && even_vga_line && even_vga_x;
@@ -129,6 +130,16 @@ module vga_interface_de2(
     reg        rd_en_d;
     reg [8:0]  src_x_d;
     reg [15:0] pix_q;
+
+    // =========================================================================
+    // linebuf: Luu dong cam dang doc tu FIFO (ghi moi dong chan).
+    // linebuf_prev: Snapshot cua dong cam TRUOC DO (da hoan chinh).
+    //   - Duoc cap nhat khi dong le dang render: copy linebuf[x] -> linebuf_prev[x]
+    //     tai tung vi tri src_x.
+    //   - Khi dong chan tiep theo bat dau va flip_h=1, linebuf_prev da day du 320
+    //     pixels cua dong truoc -> doc nguoc tu linebuf_prev ma khong conflict.
+    // Ket qua: khong co read/write hazard -> anh flip phang, khong bi soc ngang.
+    // =========================================================================
 
     always @(posedge clk_vga or negedge rst_n) begin
         if (!rst_n) begin
@@ -142,8 +153,13 @@ module vga_interface_de2(
             rd_en_d <= rd_en;
             src_x_d <= src_x;
             if (rd_en_d) begin
-                pix_q            <= din;       // giu pixel hien tai de hien thi ngay
-                linebuf[src_x_d] <= din;       // luu vao linebuf de replay dong le
+                pix_q            <= din;
+                linebuf[src_x_d] <= din;
+            end
+            // Khi dong le: copy linebuf -> linebuf_prev tung pixel (1 pixel/clk)
+            // Dieu kien: dong le, video_on, pixel chan (moi QVGA pixel ghi 1 lan)
+            if (video_on && !even_vga_line && even_vga_x) begin
+                linebuf_prev[src_x] <= linebuf[src_x];
             end
             if (!video_on)
                 pix_q <= 16'd0;
@@ -161,23 +177,21 @@ module vga_interface_de2(
     // =========================================================================
     // Chon pixel hien thi:
     //
-    // KHONG FLIP (do_flip_h = 0) -- hanh vi goc, giu nguyen:
+    // KHONG FLIP (do_flip_h = 0):
     //   Dong chan : pix_q  (pixel vua doc tu FIFO, hien thi ngay)
     //   Dong le   : linebuf[src_x]  (replay dong tren)
     //
     // CO FLIP (do_flip_h = 1):
-    //   Dong chan : linebuf[319-src_x] -- doc NGUOC linebuf cua DONG TREN.
-    //              Dong tren da hoan chinh nen co the doc bat ky vi tri nao.
-    //              Noi dung tre 1 dong so voi normal mode nhung anh flip dung.
-    //   Dong le   : linebuf[319-src_x] -- replay dong chan vua xong (flip).
+    //   Dong chan + Dong le: linebuf_prev[319-src_x]
+    //     (doc nguoc tu snapshot dong tren, khong conflict voi linebuf dang ghi)
     // =========================================================================
     wire [15:0] pixel565_out;
 
     assign pixel565_out =
-        !video_on   ? 16'd0 :
-        do_flip_h   ? linebuf[read_x_flip] :   // flip: luon doc nguoc linebuf
-        even_vga_line ? pix_q              :   // normal dong chan: tu FIFO
-                        linebuf[src_x];        // normal dong le: replay
+        !video_on     ? 16'd0 :
+        do_flip_h     ? linebuf_prev[read_x_flip] : // flip: doc tu snapshot dong tren
+        even_vga_line ? pix_q                     : // normal dong chan: tu FIFO
+                        linebuf[src_x];              // normal dong le: replay
 
     // =========================================================================
     // Tach RGB tu RGB565
@@ -362,10 +376,10 @@ module vga_interface_de2(
     //
     // Buoc 3: Map luma_inv -> palette 4 vung (moi vung 256 cap):
     //
-    //   Vung 1 (luma_inv   0..255):  Den  -> Xanh duong   R=0,        G=0,           B=luma_inv*4
-    //   Vung 2 (luma_inv 256..511):  Xanh duong -> Cyan   R=0,        G=off*4,       B=1023
-    //   Vung 3 (luma_inv 512..767):  Cyan -> Vang          R=off*4,    G=1023,        B=1023-off*4
-    //   Vung 4 (luma_inv 768..1023): Vang -> Do            R=1023,     G=1023-off*4,  B=0
+    //   Vung 1 (luma_inv   0..255):  Den  -> Xanh duong  	 R=0,        G=0,           B=luma_inv*4
+    //   Vung 2 (luma_inv 256..511):  Xanh duong -> Cyan  	 R=0,        G=off*4,       B=1023
+    //   Vung 3 (luma_inv 512..767):  Cyan -> Vang         	 R=off*4,    G=1023,        B=1023-off*4
+    //   Vung 4 (luma_inv 768..1023): Vang -> Do             R=1023,     G=1023-off*4,  B=0
     //
     // Ket qua:
     //   Vung toi  (luma thap)  -> luma_inv cao  -> Do/Vang  (NONG)
